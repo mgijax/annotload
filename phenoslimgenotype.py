@@ -309,7 +309,7 @@ def processFile():
 		if len(allele2ID) > 0 and string.find(allele2ID, 'MGI:') < 0:
 			allele2ID = 'MGI:' + allele2ID
 
-		if allele2ID == '?':
+		if allele2ID == 'MGI:?':
 			isUnknown = 1
 			allele2ID = ''
 		else:
