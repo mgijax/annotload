@@ -27,16 +27,16 @@ setenv DBPASSWORDFILE		${DBUTILITIESPATH}/.mgd_dbo_password
 echo 'GO/Marker Annotation Load'
 date
 
-cd `dirname $0`
+set annotdir = `dirname $0`
 
 # create the Annotation File
-gomarker.py -S${DBSERVER} -D${DBNAME} -I${INPUTFILE}
+${annotdir}/gomarker.py -S${DBSERVER} -D${DBNAME} -I${INPUTFILE}
 # sort it by column 2 (MGI Marker ID)
 sort -k 2,3,1,2 ${ANNOTATIONFILE} > ${ANNOTATIONFILE}.sorted
 mv -f ${ANNOTATIONFILE}.sorted ${ANNOTATIONFILE}
 
 # load the Annotation File
-annotload.py -S${DBSERVER} -D${DBNAME} -U${DBUSER} -P${DBPASSWORDFILE} -M${MODE} -I${ANNOTATIONFILE} -A\"${ANNOTATIONTYPENAME}\" -R${DELETEREFERENCE}
+${annotdir}/annotload.py -S${DBSERVER} -D${DBNAME} -U${DBUSER} -P${DBPASSWORDFILE} -M${MODE} -I${ANNOTATIONFILE} -A\"${ANNOTATIONTYPENAME}\" -R${DELETEREFERENCE}
 
 date
 
