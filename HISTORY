@@ -1,3 +1,10 @@
+TAG: annotload-1-0-16
+DATE: 10/08/2002
+STAFF: lec
+RELEASE: A
+CHANGES:
+a) add db.useOneConnection
+
 TAG: annotload-1-0-15
 DATE: 07/02/2002
 STAFF: lec
