@@ -769,7 +769,7 @@ def processFile():
 		objectKey = verifyObject(objectID, lineNum)
 		referenceKey = loadlib.verifyReference(jnum, lineNum, errorFile)
 		evidenceKey = vocabloadlib.verifyEvidence(evidence, annotTypeKey, lineNum, errorFile)
-		editorKey = loadlib.verifyUser(editor, lineNum)
+		editorKey = loadlib.verifyUser(editor, lineNum, errorFile)
 
 		if termKey == 0 or objectKey == 0 or \
 			referenceKey == 0 or \
