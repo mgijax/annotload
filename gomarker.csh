@@ -24,6 +24,9 @@ setenv DELETEREFERENCE		"J:0"
 setenv DBUSER			mgd_dbo
 setenv DBPASSWORDFILE		${DBUTILITIESPATH}/.mgd_dbo_password
 
+echo 'GO/Marker Annotation Load'
+date
+
 cd `dirname $0`
 
 # create the Annotation File
@@ -31,3 +34,6 @@ gomarker.py -S${DBSERVER} -D${DBNAME} -I${INPUTFILE}
 
 # load the Annotation File
 annotload.py -S${DBSERVER} -D${DBNAME} -U${DBUSER} -P${DBPASSWORDFILE} -M${MODE} -I${ANNOTATIONFILE} -A\"${ANNOTATIONTYPENAME}\" -R${DELETEREFERENCE}
+
+date
+
