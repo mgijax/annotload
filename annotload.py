@@ -25,7 +25,7 @@
 #	A tab-delimited file in the format:
 #		field 1: Accession ID of Vocabulary Term being Annotated to
 #		field 2: MGI ID of MGI Object being Annotated
-#		field 3: J: (without the J:, just #####)
+#		field 3: J: (J:#####)
 #		field 4: Evidence Code Abbreviation (max length 5)
 #		field 5: Inferred From (max length 255)
 #		field 6: NOT (the word "NOT" or blank)
@@ -131,7 +131,6 @@ import string
 import getopt
 import db
 import mgi_utils
-import accessionlib
 import loadlib
 import vocabloadlib
 
@@ -392,7 +391,7 @@ def verifyMode():
 		# verify deletion reference
 
 		if delReference != "J:0":
-			referenceKey = accessionlib.get_Object_key(delReference, 'Reference')
+			referenceKey = loadlib.verifyReference(delReference, 0, errorFile)
 
 			if referenceKey is None:
 				exit(1, 'Invalid Reference: %s\n' % (delReference))
