@@ -261,6 +261,9 @@ def processFile():
 		if entryDate == "Mar-00":
 			entryDate = "03/01/00"
 
+		if editor == "ap":
+			editor = "ajp"
+
 		# if no errors
 
 		if not error:
