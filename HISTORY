@@ -1,3 +1,10 @@
+TAG: annotload-2-0-0
+DATE: 12/19/2002
+STAFF: lec
+RELEASE: A
+CHANGES:
+a) VOC_Evidence changed; added _AnnotEvidence_key
+
 TAG: annotload-1-0-16
 DATE: 10/08/2002
 STAFF: lec
