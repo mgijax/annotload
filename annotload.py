@@ -554,6 +554,9 @@ def setPrimaryKeys():
 
 	global annotKey
 
+	if DEBUG:
+		return
+
         results = db.sql('select maxKey = max(_Annot_key) + 1 from VOC_Annot', 'auto')
         if results[0]['maxKey'] is None:
                 annotKey = 1000
@@ -623,6 +626,9 @@ def createAnnotationRecord(objectKey, termKey, notTerm, entryDate):
 
 	global annotKey, annotDict
 
+	if DEBUG:
+		return(0)
+
 	# if an annotation already exists for the same Object/Term/Not, 
 	# use the same annotation key
 
@@ -689,6 +695,9 @@ def createEvidenceRecord(newAnnotKey, evidenceKey, referenceKey, inferredFrom, e
 
 	global evidenceDict
 
+	if DEBUG:
+		return
+
 	# make sure this is not a duplicate evidence statement
 
 	eKey = '%s:%s:%s' % (newAnnotKey, evidenceKey, referenceKey)
@@ -696,7 +705,7 @@ def createEvidenceRecord(newAnnotKey, evidenceKey, referenceKey, inferredFrom, e
 	# evidence record may exist in our dictionary already
 	# if so, it's a duplicate; let's report it
 
-	if evidenceDict.has_key(eKey) and mode != 'preview':
+	if evidenceDict.has_key(eKey) and not DEBUG:
 		errorFile.write('Duplicate Evidence Statement: %d\n' % (lineNum))
 		return
 
@@ -713,7 +722,7 @@ def createEvidenceRecord(newAnnotKey, evidenceKey, referenceKey, inferredFrom, e
 			
 	# found it in the database; it's a duplicate
 
-	if len(results) > 0 and mode != 'preview':
+	if len(results) > 0 and not DEBUG:
 		errorFile.write('Duplicate Evidence Statement: %d\n' % (lineNum))
 		return
 
@@ -817,6 +826,9 @@ def bcpFiles():
 	#
 	'''
 
+	if DEBUG:
+		return
+
 	annotFile.close()
 	bcpAnnot = 'cat %s | bcp %s..%s in %s -c -t\"\t" -e %s -S%s -U%s >> %s' \
 		% (passwordFileName, db.get_sqlDatabase(), \
@@ -829,10 +841,9 @@ def bcpFiles():
 	   	'VOC_Evidence', evidenceFileName, errorFileName, db.get_sqlServer(), db.get_sqlUser(), diagFileName)
 	diagFile.write('%s\n' % bcpEvidence)
 
-	if not DEBUG:
-		os.system(bcpAnnot)
-		os.system(bcpEvidence)
-#		db.sql('dump transaction %s with truncate_only' % (db.get_sqlDatabase()), None)
+	os.system(bcpAnnot)
+	os.system(bcpEvidence)
+#	db.sql('dump transaction %s with truncate_only' % (db.get_sqlDatabase()), None)
 
 #
 # Main
