@@ -110,6 +110,9 @@
 #
 # History:
 #
+# lec	01/28/2004
+#	- TR 3404/JSAM
+#
 # lec	06/14/2002
 #	- TR 3744 - added -O option to allow load of annotations obsolete terms
 #		(the default is to allow load of annotations to obsolete terms)
@@ -129,6 +132,8 @@ import getopt
 import db
 import mgi_utils
 import accessionlib
+import loadlib
+import vocabloadlib
 
 #globals
 
@@ -169,7 +174,7 @@ ecodesDict = {}		# dictionary of evidence codes for quick lookup
 annotDict = {}		# dictionary of annotation records for quick lookup
 evidenceDict = {}	# dictionary of evidence records for quick lookup
 
-cdate = mgi_utils.date('%m/%d/%Y')	# current date
+loaddate = loadlib.loaddate
 
 def showUsage():
 	'''
@@ -472,7 +477,7 @@ def verifyObject(objectID, lineNum):
 		results = db.sql('select a._Object_key ' + \
 			'from ACC_Accession a, VOC_AnnotType t ' + \
 			'where a.accID = "%s" ' % (objectID) + \
-			'and a._MGIType_key = t._MGITYpe_key ' + \
+			'and a._MGIType_key = t._MGIType_key ' + \
 			'and t._AnnotType_key = %s\n' % (annotTypeKey), 'auto')
 
 		if len(results) == 1:
@@ -483,39 +488,6 @@ def verifyObject(objectID, lineNum):
 			objectKey = 0
 
 	return(objectKey)
-
-def verifyReference(referenceID, lineNum):
-	'''
-	# requires:
-	#	referenceID - the Accession ID of the Reference (J:)
-	#	lineNum - the line number of the record from the input file
-	#
-	# effects:
-	#	verifies that the Reference exists by checking the referenceDict
-	#	dictionary for the reference ID or the database.
-	#	writes to the error file if the Reference is invalid
-	#	adds the Reference ID/Key to the global referenceDict dictionary if the
-	#	reference is valid
-	#
-	# returns:
-	#	0 if the Reference is invalid
-	#	Reference Key if the Reference is valid
-	#
-	'''
-
-	global referenceDict
-
-	if referenceDict.has_key(referenceID):
-		referenceKey = referenceDict[referenceID]
-	else:
-		referenceKey = accessionlib.get_Object_key('J:' + referenceID, 'Reference')
-		if referenceKey is None:
-			errorFile.write('Invalid Reference (%d): %s\n' % (lineNum, referenceID))
-			referenceKey = 0
-		else:
-			referenceDict[referenceID] = referenceKey
-
-	return(referenceKey)
 
 def verifyEvidence(evidenceID, lineNum):
 	'''
@@ -542,28 +514,6 @@ def verifyEvidence(evidenceID, lineNum):
 		evidenceKey = 0
 
 	return(evidenceKey)
-
-def verifyEditor(editor, lineNum):
-	'''
-	# requires:
-	#	editor - the editor (string)
-	#	lineNum - the line number of the record from the input file
-	#
-	# effects:
-	#	verifies that the Editor is non-numm
-	#	writes to the error file if the Editor is invalid
-	#
-	# returns:
-	#	0 if the Editor is invalid
-	#	1 if the Editor is valid
-	#
-	'''
-
-	if len(editor) == 0:
-		errorFile.write('Missing Editor for line: %d\n' % (lineNum))
-		return(0)
-
-	return(1)
 
 def setPrimaryKeys():
 	'''
@@ -705,14 +655,14 @@ def createAnnotationRecord(objectKey, termKey, notTerm, entryDate):
 
 	return(useAnnotKey)
 
-def createEvidenceRecord(newAnnotKey, evidenceKey, referenceKey, inferredFrom, editor, notes, entryDate, lineNum):
+def createEvidenceRecord(newAnnotKey, evidenceKey, referenceKey, inferredFrom, editorKey, notes, entryDate, lineNum):
 	'''
 	# requires:
 	#	newAnnotKey - primary key of the Annotation object
 	#	evidenceKey - primary key of the Evidence Code
 	#	referenceKey - primary key of the Reference
 	#	inferredFrom - inferred from value
-	#	editor - editor
+	#	editorKey - primary key of the Editor
 	#	notes - notes
 	#	entryDate - creation and modification date of Annotation
 	#	lineNum - the line number of the record from the input file
@@ -767,7 +717,7 @@ def createEvidenceRecord(newAnnotKey, evidenceKey, referenceKey, inferredFrom, e
 
 	evidenceFile.write('%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
 		% (evidencePrimaryKey, newAnnotKey, evidenceKey, referenceKey, inferredFrom, \
-		   editor, editor, entryDate, entryDate))
+		   editorKey, editorKey, entryDate, entryDate))
 
 	noteFile.write('%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
 		% (noteKey, evidencePrimaryKey, mgiNoteObjectKey, mgiNoteTypeKey, editor, editor, entryDate, entryDate))
@@ -817,13 +767,14 @@ def processFile():
 
 		termKey = verifyTerm(termID, lineNum)
 		objectKey = verifyObject(objectID, lineNum)
-		referenceKey = verifyReference(jnum, lineNum)
-		evidenceKey = verifyEvidence(evidence, lineNum)
+		referenceKey = loadlib.verifyReference(jnum, lineNum, errorFile)
+		evidenceKey = vocabloadlib.verifyEvidence(evidence, annotTypeKey, lineNum, errorFile)
+		editorKey = loadlib.verifyUser(editor, lineNum)
 
 		if termKey == 0 or objectKey == 0 or \
 			referenceKey == 0 or \
 			evidenceKey == 0 or \
-			not verifyEditor(editor, lineNum):
+			editorKey == 0:
 
 			# set error flag to true
 			error = 1
@@ -838,7 +789,7 @@ def processFile():
 		# If the entry date is not given, use the current date
 
 		if len(entryDate) == 0:
-			entryDate = cdate
+			entryDate = loaddate
 
 		# if errors, continue to next record
 		if error:
@@ -852,7 +803,7 @@ def processFile():
 			evidenceKey, \
 			referenceKey, \
 			inferredFrom, \
-			editor, \
+			editorKey, \
 			notes, \
 			entryDate, \
 			lineNum)
