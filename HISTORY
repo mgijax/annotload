@@ -1,3 +1,10 @@
+TAG: annotload-3-0-1
+DATE: 02/18/2004
+STAFF: lec
+RELEASE: A
+CHANGES:
+a) JSAM; VOC_Evidence, MGI_Note (editorKey)
+
 TAG: annotload-3-0-0
 DATE: 01/28/2003
 STAFF: lec
