@@ -257,10 +257,11 @@ def init():
 	db.set_sqlLogin(user, password, server, database)
  
 	fdate = mgi_utils.date('%m%d%Y')	# current date
-	diagFileName = inputFileName + '.' + fdate + '.diagnostics'
-	errorFileName = inputFileName + '.' + fdate + '.error'
-	annotFileName = inputFileName + '.VOC_Annot.bcp'
-	evidenceFileName = inputFileName + '.VOC_Evidence.bcp'
+	head, tail = os.path.split(inputFileName) 
+	diagFileName = tail + '.' + fdate + '.diagnostics'
+	errorFileName = tail + '.' + fdate + '.error'
+	annotFileName = tail + '.VOC_Annot.bcp'
+	evidenceFileName = tail + '.VOC_Evidence.bcp'
 
 	try:
 		inputFile = open(inputFileName, 'r')
