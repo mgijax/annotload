@@ -31,6 +31,9 @@ cd `dirname $0`
 
 # create the Annotation File
 gomarker.py -S${DBSERVER} -D${DBNAME} -I${INPUTFILE}
+# sort it by column 2 (MGI Marker ID)
+sort -k 2,2 ${INPUTFILE} > ${INPUTFILE}.sorted
+mv -f ${INPUTFILE}.sorted ${INPUTFILE}
 
 # load the Annotation File
 annotload.py -S${DBSERVER} -D${DBNAME} -U${DBUSER} -P${DBPASSWORDFILE} -M${MODE} -I${ANNOTATIONFILE} -A\"${ANNOTATIONTYPENAME}\" -R${DELETEREFERENCE}
