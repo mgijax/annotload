@@ -720,9 +720,9 @@ def createEvidenceRecord(newAnnotKey, evidenceKey, referenceKey, inferredFrom, e
 		   editorKey, editorKey, entryDate, entryDate))
 
 	noteFile.write('%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
-		% (noteKey, evidencePrimaryKey, mgiNoteObjectKey, mgiNoteTypeKey, editor, editor, entryDate, entryDate))
+		% (noteKey, evidencePrimaryKey, mgiNoteObjectKey, mgiNoteTypeKey, editorKey, editorKey, entryDate, entryDate))
 	noteChunkFile.write('%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
-		% (noteKey, mgiNoteSeqNum, notes, editor, editor, entryDate, entryDate))
+		% (noteKey, mgiNoteSeqNum, notes, editorKey, editorKey, entryDate, entryDate))
 
 	evidencePrimaryKey = evidencePrimaryKey + 1
 	noteKey = noteKey + 1
