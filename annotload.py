@@ -397,9 +397,9 @@ def verifyMode():
 				'and e._Annot_key = a._Annot_key ' + \
 				'and a._AnnotType_key = %s\n' % (annotTypeKey), None, execute = not DEBUG)
 			db.sql('delete VOC_Annot from VOC_Annot a ' + \
-				'where not exists (select 1 from VOC_Evidence e ' + \
-				'where a._Annot_key = e._Annot_key ' + \
-				'and a._AnnotType_key = %s)\n' % (annotTypeKey), None, execute = not DEBUG)
+				'where a._AnnotType_key = %s ' % (annotTypeKey) + \
+				'and not exists (select 1 from VOC_Evidence e ' + \
+				'where a._Annot_key = e._Annot_key)', None, execute = not DEBUG)
 		else:
 			db.sql('delete VOC_Annot from VOC_Annot ' + \
 				'where _AnnotType_key = %s\n' % (annotTypeKey), None, execute = not DEBUG)
