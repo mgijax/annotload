@@ -1,3 +1,10 @@
+TAG: annotload-2-0-1
+DATE: 01/05/2003
+STAFF: lec
+RELEASE: A
+CHANGES:
+a) fixed delete of VOC_Annot (TR 5461)
+
 TAG: annotload-2-0-0
 DATE: 12/19/2002
 STAFF: lec
