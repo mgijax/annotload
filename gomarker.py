@@ -162,7 +162,8 @@ def init():
 	db.set_sqlServer(server)
 	db.set_sqlDatabase(database)
  
-	outputFileName = inputFileName + ".annotload"
+	head, tail = os.path.split(inputFileName)
+	outputFileName = tail + ".annotload"
 	errorFileName = outputFileName + ".error"
 
 	try:

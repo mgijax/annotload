@@ -196,7 +196,8 @@ def init():
 	# Initialize db.py DBMS parameters
 	db.set_sqlLogin(user, password, server, database)
  
-	outputFileName = inputFileName + ".annotload"
+	head, tail = os.path.split(inputFileName)
+	outputFileName = tail + ".annotload"
 	errorFileName = outputFileName + ".error"
 
 	try:
