@@ -152,6 +152,7 @@ loadObsolete = 0	# load annotations to obsolete terms?
 annotTypeName = ''	# VOC_AnnotType.name
 annotTypeKey = 0	# VOC_AnnotType._AnnotType_key
 annotKey = 0		# VOC_Annot._Annot_key
+evidencePrimaryKey = 0	# VOC_Evidence._AnnotEvidence_key
 
 termDict = {}		# dictionary of terms for quick lookup
 objectDict = {}		# dictionary of objects for quick lookup
@@ -227,7 +228,7 @@ def init():
 	global inputFile, diagFile, errorFile, errorFileName, diagFileName
 	global annotFile, annotFileName, evidenceFile, evidenceFileName, passwordFileName
 	global delReference, loadObsolete, mode
-	global annotTypeKey, annotKey, annotTypeName
+	global annotTypeKey, annotKey, annotTypeName, evidencePrimaryKey
  
 	try:
 		optlist, args = getopt.getopt(sys.argv[1:], 'S:D:U:P:M:I:A:R:O')
@@ -554,7 +555,7 @@ def setPrimaryKeys():
 	#
 	'''
 
-	global annotKey
+	global annotKey, evidencePrimaryKey
 
 	if DEBUG:
 		return
@@ -564,6 +565,12 @@ def setPrimaryKeys():
                 annotKey = 1000
         else:
                 annotKey = results[0]['maxKey']
+
+        results = db.sql('select maxKey = max(_AnnotEvidence_key) + 1 from VOC_Evidence', 'auto')
+        if results[0]['maxKey'] is None:
+                evidencePrimaryKey = 1000
+        else:
+                evidencePrimaryKey = results[0]['maxKey']
 
 def loadDictionaries():
 	'''
@@ -695,7 +702,7 @@ def createEvidenceRecord(newAnnotKey, evidenceKey, referenceKey, inferredFrom, e
 	#
 	'''
 
-	global evidenceDict
+	global evidencePrimaryKey, evidenceDict
 
 	if DEBUG:
 		return
@@ -730,9 +737,11 @@ def createEvidenceRecord(newAnnotKey, evidenceKey, referenceKey, inferredFrom, e
 
 	# not found in the database; let's create it
 
-	evidenceFile.write('%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
-		% (newAnnotKey, evidenceKey, referenceKey, inferredFrom, \
+	evidenceFile.write('%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
+		% (evidencePrimaryKey, newAnnotKey, evidenceKey, referenceKey, inferredFrom, \
 		   editor, editor, notes, entryDate, entryDate))
+
+	evidencePrimaryKey = evidencePrimaryKey + 1
 
 def processFile():
 	'''
