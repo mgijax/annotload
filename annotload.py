@@ -718,13 +718,14 @@ def createEvidenceRecord(newAnnotKey, evidenceKey, referenceKey, inferredFrom, e
 		% (evidencePrimaryKey, newAnnotKey, evidenceKey, referenceKey, inferredFrom, \
 		   editorKey, editorKey, entryDate, entryDate))
 
-	noteFile.write('%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
+	if len(notes) > 0:
+	    noteFile.write('%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
 		% (noteKey, evidencePrimaryKey, mgiNoteObjectKey, mgiNoteTypeKey, editorKey, editorKey, entryDate, entryDate))
-	noteChunkFile.write('%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
+	    noteChunkFile.write('%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
 		% (noteKey, mgiNoteSeqNum, notes, editorKey, editorKey, entryDate, entryDate))
+	    noteKey = noteKey + 1
 
 	evidencePrimaryKey = evidencePrimaryKey + 1
-	noteKey = noteKey + 1
 
 def processFile():
 	'''
