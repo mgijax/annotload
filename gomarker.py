@@ -214,11 +214,11 @@ def processFile():
 		entryDate = string.strip(tokens[11])
 		notes = string.strip(tokens[12])
 
-		# if term = unknown, then set Evidence Code = NAS and J = ???
+		# if term = unknown, then set Evidence Code = ND and J = 73796
 		# and move original J: into Notes
 
 		if goID in ["GO:0000004", "GO:0008372", "GO:0005554"]:
-			evidence = "non-traceable author statement"
+			evidence = "not available"
 			notes = jnum
 			jnum = "J:73796"
 
