@@ -306,14 +306,14 @@ def processFile():
 		if string.find(allele1ID, 'MGI:') < 0:
 			allele1ID = 'MGI:' + allele1ID
 
-		if len(allele2ID) > 0 and string.find(allele2ID, 'MGI:') < 0:
-			allele2ID = 'MGI:' + allele2ID
-
-		if allele2ID == 'MGI:?':
+		if allele2ID == '?':
 			isUnknown = 1
 			allele2ID = ''
 		else:
 			isUnknown = 0
+
+			if len(allele2ID) > 0 and string.find(allele2ID, 'MGI:') < 0:
+				allele2ID = 'MGI:' + allele2ID
 
 		# get marker key
 
