@@ -9,6 +9,8 @@
 #
 #	See TRs 2239 and 2867.
 #  
+# 	Used only for migration of Spreadsheets into database.
+#	Used for MGI 3.8 migration only.
 #
 # Assumes:
 #
@@ -424,7 +426,6 @@ def processFile():
 					else:
 						errorFile.write("Could Not Create Genotype Record for Strain: %s\n") % (strain)
 						error = 1
-
 
 				# single mutant exists
 				elif len(results) == 1:
