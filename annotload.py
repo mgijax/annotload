@@ -696,7 +696,7 @@ def createEvidenceRecord(newAnnotKey, evidenceKey, referenceKey, inferredFrom, e
 	# evidence record may exist in our dictionary already
 	# if so, it's a duplicate; let's report it
 
-	if evidenceDict.has_key(eKey):
+	if evidenceDict.has_key(eKey) and mode != 'preview':
 		errorFile.write('Duplicate Evidence Statement: %d\n' % (lineNum))
 		return
 
@@ -713,7 +713,7 @@ def createEvidenceRecord(newAnnotKey, evidenceKey, referenceKey, inferredFrom, e
 			
 	# found it in the database; it's a duplicate
 
-	if len(results) > 0:
+	if len(results) > 0 and mode != 'preview':
 		errorFile.write('Duplicate Evidence Statement: %d\n' % (lineNum))
 		return
 
