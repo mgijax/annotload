@@ -355,7 +355,7 @@ def verifyMode():
 			if referenceKey is None:
 				exit(1, 'Invalid Reference: %s\n' % (delReference))
 		
-			db.sql('delete VOC_Annot from VOC_Annot a, VOC_Evidence e ' + \
+			db.sql('delete VOC_Evidence from VOC_Annot a, VOC_Evidence e ' + \
 				'where e._Refs_key = %s ' % (referenceKey) + \
 				'and e._Annot_key = a._Annot_key ' + \
 				'and a._AnnotType_key = %s\n' % (annotTypeKey), None, execute = not DEBUG)
