@@ -505,9 +505,6 @@ def setPrimaryKeys():
 
 	global annotKey, evidencePrimaryKey, noteKey
 
-	if DEBUG:
-		return
-
         results = db.sql('select maxKey = max(_Annot_key) + 1 from VOC_Annot', 'auto')
         if results[0]['maxKey'] is None:
                 annotKey = 1000
@@ -589,9 +586,6 @@ def createAnnotationRecord(objectKey, termKey, notTerm, entryDate):
 
 	global annotKey, annotDict
 
-	if DEBUG:
-		return(0)
-
 	# if an annotation already exists for the same Object/Term/Not, 
 	# use the same annotation key
 
@@ -658,9 +652,6 @@ def createEvidenceRecord(newAnnotKey, evidenceKey, referenceKey, inferredFrom, e
 
 	global evidencePrimaryKey, evidenceDict, noteKey
 
-	if DEBUG:
-		return
-
 	# make sure this is not a duplicate evidence statement
 
 	eKey = '%s:%s:%s' % (newAnnotKey, evidenceKey, referenceKey)
@@ -668,8 +659,8 @@ def createEvidenceRecord(newAnnotKey, evidenceKey, referenceKey, inferredFrom, e
 	# evidence record may exist in our dictionary already
 	# if so, it's a duplicate; let's report it
 
-	if evidenceDict.has_key(eKey) and not DEBUG:
-		errorFile.write('Duplicate Evidence Statement: %d\n' % (lineNum))
+	if evidenceDict.has_key(eKey):
+		errorFile.write('Duplicate Evidence Statement (in input file): %d\n' % (lineNum))
 		return
 
 	# not a duplicate
@@ -685,8 +676,8 @@ def createEvidenceRecord(newAnnotKey, evidenceKey, referenceKey, inferredFrom, e
 			
 	# found it in the database; it's a duplicate
 
-	if len(results) > 0 and not DEBUG:
-		errorFile.write('Duplicate Evidence Statement: %d\n' % (lineNum))
+	if len(results) > 0:
+		errorFile.write('Duplicate Evidence Statement (in database already): %d\n' % (lineNum))
 		return
 
 	# not found in the database; let's create it
