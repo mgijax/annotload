@@ -139,11 +139,15 @@ diagFile = ''		# file descriptor
 errorFile = ''		# file descriptor
 annotFile = ''		# file descriptor
 evidenceFile = ''	# file descriptor
+noteFile = ''		# file descriptor
+noteChunkFile = ''	# file descriptor
 
 diagFileName = ''	# file name
 errorFileName = ''	# file name
 annotFileName = ''	# file name
 evidenceFileName = ''	# file name
+noteFileName = ''	# file name
+noteChunkFileName=  ''	# file name
 passwordFileName = ''	# file name
 
 mode = ''		# processing mode
@@ -153,6 +157,10 @@ annotTypeName = ''	# VOC_AnnotType.name
 annotTypeKey = 0	# VOC_AnnotType._AnnotType_key
 annotKey = 0		# VOC_Annot._Annot_key
 evidencePrimaryKey = 0	# VOC_Evidence._AnnotEvidence_key
+noteKey = 0		# MGI_Note._Note_key
+mgiNoteObjectKey = 25	# MGI_Note._MGIType_key
+mgiNoteTypeKey = 1008	# MGI_Note._NoteType_key
+mgiNoteSeqNum = 1	# MGI_NoteChunk.sequenceNum
 
 termDict = {}		# dictionary of terms for quick lookup
 objectDict = {}		# dictionary of objects for quick lookup
@@ -227,8 +235,9 @@ def init():
  
 	global inputFile, diagFile, errorFile, errorFileName, diagFileName
 	global annotFile, annotFileName, evidenceFile, evidenceFileName, passwordFileName
+	global noteFile, noteFileName, noteChunkFile, noteChunkFileName
 	global delReference, loadObsolete, mode
-	global annotTypeKey, annotKey, annotTypeName, evidencePrimaryKey
+	global annotTypeKey, annotKey, annotTypeName, evidencePrimaryKey, noteKey
  
 	try:
 		optlist, args = getopt.getopt(sys.argv[1:], 'S:D:U:P:M:I:A:R:O')
@@ -278,6 +287,8 @@ def init():
 	errorFileName = tail + '.' + fdate + '.error'
 	annotFileName = tail + '.VOC_Annot.bcp'
 	evidenceFileName = tail + '.VOC_Evidence.bcp'
+	noteFileName = tail + '.MGI_Note.bcp'
+	noteChunkFileName = tail + '.MGI_NoteChunk.bcp'
 
 	try:
 		inputFile = open(inputFileName, 'r')
@@ -303,6 +314,16 @@ def init():
 		evidenceFile = open(evidenceFileName, 'w')
 	except:
 		exit(1, 'Could not open file %s\n' % evidenceFileName)
+		
+	try:
+		noteFile = open(noteFileName, 'w')
+	except:
+		exit(1, 'Could not open file %s\n' % noteFileName)
+		
+	try:
+		noteChunkFile = open(noteChunkFileName, 'w')
+	except:
+		exit(1, 'Could not open file %s\n' % noteChunkFileName)
 		
 	# Log all SQL
 	db.set_sqlLogFunction(db.sqlLogAll)
@@ -555,7 +576,7 @@ def setPrimaryKeys():
 	#
 	'''
 
-	global annotKey, evidencePrimaryKey
+	global annotKey, evidencePrimaryKey, noteKey
 
 	if DEBUG:
 		return
@@ -571,6 +592,12 @@ def setPrimaryKeys():
                 evidencePrimaryKey = 1000
         else:
                 evidencePrimaryKey = results[0]['maxKey']
+
+        results = db.sql('select maxKey = max(_Note_key) + 1 from MGI_Note', 'auto')
+        if results[0]['maxKey'] is None:
+                noteKey = 1000
+        else:
+                noteKey = results[0]['maxKey']
 
 def loadDictionaries():
 	'''
@@ -702,7 +729,7 @@ def createEvidenceRecord(newAnnotKey, evidenceKey, referenceKey, inferredFrom, e
 	#
 	'''
 
-	global evidencePrimaryKey, evidenceDict
+	global evidencePrimaryKey, evidenceDict, noteKey
 
 	if DEBUG:
 		return
@@ -737,11 +764,17 @@ def createEvidenceRecord(newAnnotKey, evidenceKey, referenceKey, inferredFrom, e
 
 	# not found in the database; let's create it
 
-	evidenceFile.write('%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
+	evidenceFile.write('%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
 		% (evidencePrimaryKey, newAnnotKey, evidenceKey, referenceKey, inferredFrom, \
-		   editor, editor, notes, entryDate, entryDate))
+		   editor, editor, entryDate, entryDate))
+
+	noteFile.write('%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
+		% (noteKey, evidencePrimaryKey, mgiNoteObjectKey, mgiNoteTypeKey, editor, editor, entryDate, entryDate))
+	noteChunkFile.write('%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
+		% (noteKey, mgiNoteSeqNum, notes, editor, editor, entryDate, entryDate))
 
 	evidencePrimaryKey = evidencePrimaryKey + 1
+	noteKey = noteKey + 1
 
 def processFile():
 	'''
@@ -852,8 +885,23 @@ def bcpFiles():
 	   	'VOC_Evidence', evidenceFileName, errorFileName, db.get_sqlServer(), db.get_sqlUser(), diagFileName)
 	diagFile.write('%s\n' % bcpEvidence)
 
+	noteFile.close()
+	bcpNote = 'cat %s | bcp %s..%s in %s -c -t\"\t" -e %s -S%s -U%s >> %s' \
+		% (passwordFileName, db.get_sqlDatabase(), \
+	   	'MGI_Note', noteFileName, errorFileName, db.get_sqlServer(), db.get_sqlUser(), diagFileName)
+	diagFile.write('%s\n' % bcpNote)
+
+	noteChunkFile.close()
+	bcpNoteChunk = 'cat %s | bcp %s..%s in %s -c -t\"\t" -e %s -S%s -U%s >> %s' \
+		% (passwordFileName, db.get_sqlDatabase(), \
+	   	'MGI_NoteChunk', noteChunkFileName, errorFileName, db.get_sqlServer(), db.get_sqlUser(), diagFileName)
+	diagFile.write('%s\n' % bcpNoteChunk)
+
 	os.system(bcpAnnot)
 	os.system(bcpEvidence)
+	os.system(bcpNote)
+	os.system(bcpNoteChunk)
+
 #	db.sql('dump transaction %s with truncate_only' % (db.get_sqlDatabase()), None)
 
 #
