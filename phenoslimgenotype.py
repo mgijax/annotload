@@ -454,5 +454,6 @@ def processFile():
 
 init()
 processFile()
+db.sql('update statistics ACC_Accession', None)
 exit(0)
 
