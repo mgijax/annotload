@@ -42,6 +42,7 @@
 #	-I = input file
 #	-A = annotation type name (ex. "PhenoSlim/Genotype", "GO/Marker")
 #	-R = reference (J:####) (used when mode = "new")
+#	-O = load annotations to obsolete terms (default is to NOT load them)
 #
 #	processing modes:
 #		new - delete the Annotations for the given Reference and Annotation Type.
@@ -73,6 +74,7 @@
 #		if mode = preview:  set "DEBUG" to True
 #
 #	3. Load Evidence Codes and Terms into dictionaries for quicker lookup.
+#	    If not -O, then only load non-obsolete Terms.
 #
 #	For each line in the input file:
 #
@@ -108,6 +110,10 @@
 #
 # History:
 #
+# lec	06/14/2002
+#	- TR 3744 - added -O option to allow load of annotations obsolete terms
+#		(the default is to allow load of annotations to obsolete terms)
+#
 # lec	05/28/2002
 #	- TR 3724; fix deletion (add deletion of orphan VOC_Annot records)
 #
@@ -142,6 +148,7 @@ passwordFileName = ''	# file name
 
 mode = ''		# processing mode
 delReference = 0	# deletion reference (J:###)
+loadObsolete = 0	# load annotations to obsolete terms?
 annotTypeName = ''	# VOC_AnnotType.name
 annotTypeKey = 0	# VOC_AnnotType._AnnotType_key
 annotKey = 0		# VOC_Annot._Annot_key
@@ -173,7 +180,8 @@ def showUsage():
 		'-M mode\n' + \
 		'-I input file\n' + \
 		'-A annotation type name\n' + \
-		'-R reference\n'
+		'-R reference\n' + \
+		'-O load annotations to obsolete terms\n'
 	exit(1, usage)
  
 def exit(status, message = None):
@@ -217,11 +225,11 @@ def init():
  
 	global inputFile, diagFile, errorFile, errorFileName, diagFileName
 	global annotFile, annotFileName, evidenceFile, evidenceFileName, passwordFileName
-	global delReference, mode
+	global delReference, loadObsolete, mode
 	global annotTypeKey, annotKey, annotTypeName
  
 	try:
-		optlist, args = getopt.getopt(sys.argv[1:], 'S:D:U:P:M:I:A:R:')
+		optlist, args = getopt.getopt(sys.argv[1:], 'S:D:U:P:M:I:A:R:O:')
 	except:
 		showUsage()
  
@@ -252,6 +260,8 @@ def init():
                         annotTypeName = opt[1]
                 elif opt[0] == '-R':
                         delReference = opt[1]
+                elif opt[0] == '-O':
+                        loadObsolete = 1
                 else:
                         showUsage()
  
@@ -384,9 +394,10 @@ def verifyTerm(termID, lineNum):
 	#	lineNum - the line number of the record from the input file
 	#
 	# effects:
-	#	verifies that the Term exists and is of the appropriate type
-	#	for the Annotation Type of the load by checking the termDict
-	#	dictionary for the term ID.
+	#	verifies that:
+	#		the Term exists 
+	#		is of the appropriate type for the Annotation Type 
+	#			of the load by checking the termDict dictionary for the term ID.
 	#	writes to the error file if the Term is invalid
 	#
 	# returns:
@@ -395,10 +406,15 @@ def verifyTerm(termID, lineNum):
 	#
 	'''
 
+	termKey = 0
+
 	if termDict.has_key(termID):
 		termKey = termDict[termID]
 	else:
-		errorFile.write('Invalid Term (%d) %s\n' % (lineNum, termID))
+		if not loadObsolete:
+			errorFile.write('Invalid or Obsolete Term (%d) %s\n' % (lineNum, termID))
+		else:
+			errorFile.write('Invalid Term (%d) %s\n' % (lineNum, termID))
 		termKey = 0
 
 	return(termKey)
@@ -566,11 +582,19 @@ def loadDictionaries():
 	for r in results:
 		ecodesDict[r['abbreviation']] = r['_Term_key']
 
-	results = db.sql('select t._Object_key, t.accID ' + \
-			'from VOC_Term_Acc_View t, VOC_Term tm, VOC_AnnotType a ' + \
-			'where t._Object_key = tm._Term_key ' + \
-			'and tm._Vocab_key = a._Vocab_key ' + \
-			'and a._AnnotType_key = %s\n' % (annotTypeKey), 'auto')
+	cmd = 'select t._Object_key, t.accID ' + \
+		'from VOC_Term_Acc_View t, VOC_Term tm, VOC_AnnotType a ' + \
+		'where t._Object_key = tm._Term_key ' + \
+		'and tm._Vocab_key = a._Vocab_key ' + \
+		'and a._AnnotType_key = %s\n' % (annotTypeKey)
+
+	# if loadObsolete is false, then only load non-obsoleted terms...
+
+	if not loadObsolete:
+		# only load non-obsoleted terms
+		cmd = cmd + 'and tm.isObsolete = 0'
+
+	results = db.sql(cmd, 'auto')
 
 	for r in results:
 		termDict[r['accID']] = r['_Object_key']
