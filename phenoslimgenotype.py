@@ -197,8 +197,8 @@ def init():
 	db.set_sqlLogin(user, password, server, database)
  
 	head, tail = os.path.split(inputFileName)
-	outputFileName = tail + ".annotload"
-	errorFileName = outputFileName + ".error"
+	outputFileName = tail + '.annotload'
+	errorFileName = outputFileName + '.error'
 
 	try:
 		inputFile = open(inputFileName, 'r')
@@ -300,14 +300,20 @@ def processFile():
 		else:
 			notes = ''
 
-		if string.find(markerID, "MGI:") < 0:
-			markerID = "MGI:" + markerID
+		if string.find(markerID, 'MGI:') < 0:
+			markerID = 'MGI:' + markerID
 
-		if string.find(allele1ID, "MGI:") < 0:
-			allele1ID = "MGI:" + allele1ID
+		if string.find(allele1ID, 'MGI:') < 0:
+			allele1ID = 'MGI:' + allele1ID
 
-		if len(allele2ID) > 0 and string.find(allele2ID, "MGI:") < 0:
-			allele2ID = "MGI:" + allele2ID
+		if len(allele2ID) > 0 and string.find(allele2ID, 'MGI:') < 0:
+			allele2ID = 'MGI:' + allele2ID
+
+		if allele2ID = '?':
+			isUnknown = 1
+			allele2ID = ''
+		else:
+			isUnknown = 0
 
 		# get marker key
 
@@ -319,7 +325,7 @@ def processFile():
 				markerKey = results[0]['_Object_key']
 				markerDict[markerID] = markerKey
 			else:
-				errorFile.write("Invalid Marker (%d): %s\n" % (lineNum, markerID))
+				errorFile.write('Invalid Marker (%d): %s\n' % (lineNum, markerID))
 				error = 1
 
 		# get allele 1 key
@@ -332,7 +338,7 @@ def processFile():
 				allele1Key = results[0]['_Object_key']
 				alleleDict[allele1ID] = allele1Key
 			else:
-				errorFile.write("Invalid Allele (%d): %s\n" % (lineNum, allele1ID))
+				errorFile.write('Invalid Allele (%d): %s\n' % (lineNum, allele1ID))
 				error = 1
 
 		# get allele 2 key, if allele 2 exists
@@ -346,7 +352,7 @@ def processFile():
 					allele2Key = results[0]['_Object_key']
 					alleleDict[allele2ID] = allele2Key
 				else:
-					errorFile.write("Invalid Allele (%d): %s\n" % (lineNum, allele2ID))
+					errorFile.write('Invalid Allele (%d): %s\n' % (lineNum, allele2ID))
 					error = 1
 		else:
 			allele2Key = 'NULL'
@@ -375,7 +381,7 @@ def processFile():
 		if termDict.has_key(psterm):
 			termID = termDict[psterm]
 		else:
-			errorFile.write("Invalid Term (%d): %s\n" % (lineNum, psterm))
+			errorFile.write('Invalid Term (%d): %s\n' % (lineNum, psterm))
 			error = 1
 
 		# if no errors, we can look for the genotype record
@@ -414,8 +420,8 @@ def processFile():
 						'values(%s, %s, 0, "%s", "%s", NULL, getdate(), getdate())\n' \
 						% (genotypeKey, strainKey, editor, editor) + \
 						'insert into GXD_AllelePair ' + \
-						'values (%s, %s, 1, %s, %s, %s, 0, getdate(), getdate())\n' \
-						% (allelePairKey, genotypeKey, allele1Key, allele2Key, markerKey)
+						'values (%s, %s, 1, %s, %s, %s, %d, getdate(), getdate())\n' \
+						% (allelePairKey, genotypeKey, allele1Key, allele2Key, markerKey, isUnknown)
 					db.sql(cmd, None)
 
 					# grab the MGI Acc ID of the new record
@@ -425,7 +431,7 @@ def processFile():
 						genotypeID = results[0]['accID']
 						genotypeDict[gKey] = genotypeID
 					else:
-						errorFile.write("Could Not Create Genotype Record for Strain: %s\n") % (strain)
+						errorFile.write('Could Not Create Genotype Record for Strain: %s\n') % (strain)
 						error = 1
 
 				# single mutant exists
@@ -438,7 +444,7 @@ def processFile():
 
 			if not error:
 
-				outputFile.write("%s\t%s\t%s\t%s\t\t\t%s\t\t%s\n" \
+				outputFile.write('%s\t%s\t%s\t%s\t\t\t%s\t\t%s\n' \
 					% (termID, genotypeID, jnum, ecode, editor, mgi_utils.prvalue(notes)))
 
 
