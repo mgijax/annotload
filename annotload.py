@@ -488,32 +488,6 @@ def verifyObject(objectID, lineNum):
 
 	return(objectKey)
 
-def verifyEvidence(evidenceID, lineNum):
-	'''
-	# requires:
-	#	evidenceID - the abbreviation of the evidence code
-	#	lineNum - the line number of the record from the input file
-	#
-	# effects:
-	#	verifies that the Evidence Code exists and is of the appropriate type
-	#	for the Annotation Type of the load by checking the evidenceDict
-	#	dictionary for the evidence ID.
-	#	writes to the error file if the Evidence is invalid
-	#
-	# returns:
-	#	0 if the Evidence is invalid
-	#	Evidence Key if the Evidence is valid
-	#
-	'''
-
-	if ecodesDict.has_key(evidenceID):
-		evidenceKey = ecodesDict[evidenceID]
-	else:
-		errorFile.write('Invalid Evidence Code (%d): %s\n' % (lineNum, evidenceID))
-		evidenceKey = 0
-
-	return(evidenceKey)
-
 def setPrimaryKeys():
 	'''
 	# requires:
