@@ -229,7 +229,7 @@ def init():
 	global annotTypeKey, annotKey, annotTypeName
  
 	try:
-		optlist, args = getopt.getopt(sys.argv[1:], 'S:D:U:P:M:I:A:R:O:')
+		optlist, args = getopt.getopt(sys.argv[1:], 'S:D:U:P:M:I:A:R:O')
 	except:
 		showUsage()
  
