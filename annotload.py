@@ -717,18 +717,18 @@ def processFile():
 		# Split the line into tokens
 		tokens = string.splitfields(line[:-1], '\t')
 
-		if len(tokens) != 9:
+		try:
+			termID = tokens[0]
+			objectID = tokens[1]
+			jnum = tokens[2]
+			evidence = tokens[3]
+			inferredFrom = string.strip(tokens[4])
+			notTerm = string.strip(tokens[5])
+			editor = string.strip(tokens[6])
+			entryDate = string.strip(tokens[7])
+			notes = string.strip(tokens[8])
+		except:
 			exit(1, 'Invalid Line (%d): %s\n' % (lineNum, line))
-
-		termID = tokens[0]
-		objectID = tokens[1]
-		jnum = tokens[2]
-		evidence = tokens[3]
-		inferredFrom = string.strip(tokens[4])
-		notTerm = string.strip(tokens[5])
-		editor = string.strip(tokens[6])
-		entryDate = string.strip(tokens[7])
-		notes = string.strip(tokens[8])
 
 		termKey = verifyTerm(termID, lineNum)
 		objectKey = verifyObject(objectID, lineNum)

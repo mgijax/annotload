@@ -68,6 +68,7 @@ import sys
 import os
 import string
 import getopt
+import regsub
 import db
 import mgi_utils
 
@@ -207,7 +208,7 @@ def processFile():
 		goID = string.strip(tokens[5])
 		jnum = string.strip(tokens[7])
 		evidence = string.strip(tokens[8])
-		inferredFrom = regsub.gsub('|', ', ', substring.strip(tokens[9]))
+		inferredFrom = regsub.gsub('|', ', ', string.strip(tokens[9]))
 		editor = string.strip(tokens[10])
 		entryDate = string.strip(tokens[11])
 		notes = string.strip(tokens[12])
