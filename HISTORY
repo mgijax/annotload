@@ -1,3 +1,10 @@
+TAG: annotload-3-0-4
+DATE: 03/07/2005
+STAFF: lec
+RELEASE: A
+CHANGES:
+a) annotload.py; remove obsolete verifyEvidence
+
 TAG: annotload-3-0-3
 DATE: 09/08/2004
 STAFF: lec
