@@ -95,6 +95,8 @@ genotypeKey = 0
 allelePairKey = 0
 newStrainKey = 0
 
+termDict = {}		# dictionary of ps term to speed up lookup
+
 def showUsage():
 	'''
 	# requires:
@@ -153,6 +155,7 @@ def init():
 	global inputFile, outputFile, errorFile
 	global genotypeKey, allelePairKey, newStrainKey
 	global editor
+	global termDict
  
 	try:
 		optlist, args = getopt.getopt(sys.argv[1:], 'S:D:U:P:I:E:')
@@ -230,6 +233,9 @@ def init():
 	else:
 		newStrainKey = results[0]['maxKey']
 
+	results = db.sql('select accID, term from VOC_Term_View where _Vocab_key = 1', 'auto')
+	for r in results:
+		termDict[r['term']] = r['accID']
 
 def processFile():
 	'''
@@ -244,6 +250,13 @@ def processFile():
 	'''
 
 	global genotypeKey, allelePairKey, newStrainKey
+
+	# use dictionaries to store accID/key pairs for quicker lookup
+
+	markerDict = {}
+	alleleDict = {}
+	strainDict = {}
+	genotypeDict = {}
 
 	# For each line in the input file
 	lineNum = 0
@@ -295,53 +308,69 @@ def processFile():
 
 		# get marker key
 
-		results = db.sql('select _Object_key from MRK_Acc_View where accid = "%s"' % (markerID), 'auto')
-		if len(results) > 0:
-			markerKey = results[0]['_Object_key']
+		if markerDict.has_key(markerID):
+			markerKey = markerDict[markerID]
 		else:
-			errorFile.write("Invalid Marker (%d): %s\n" % (lineNum, markerID))
-			error = 1
+			results = db.sql('select _Object_key from MRK_Acc_View where accid = "%s"' % (markerID), 'auto')
+			if len(results) > 0:
+				markerKey = results[0]['_Object_key']
+				markerDict[markerID] = markerKey
+			else:
+				errorFile.write("Invalid Marker (%d): %s\n" % (lineNum, markerID))
+				error = 1
 
 		# get allele 1 key
 
-		results = db.sql('select _Object_key from ALL_Acc_View where accid = "%s"' % (allele1ID), 'auto')
-		if len(results) > 0:
-			allele1Key = results[0]['_Object_key']
+		if alleleDict.has_key(allele1ID):
+			allele1Key = alleleDict[allele1ID]
 		else:
-			errorFile.write("Invalid Allele (%d): %s\n" % (lineNum, allele1ID))
-			error = 1
+			results = db.sql('select _Object_key from ALL_Acc_View where accid = "%s"' % (allele1ID), 'auto')
+			if len(results) > 0:
+				allele1Key = results[0]['_Object_key']
+				alleleDict[allele1ID] = allele1Key
+			else:
+				errorFile.write("Invalid Allele (%d): %s\n" % (lineNum, allele1ID))
+				error = 1
 
 		# get allele 2 key, if allele 2 exists
 
 		if len(allele2ID) > 0:
-			results = db.sql('select _Object_key from ALL_Acc_View where accid = "%s"' % (allele2ID), 'auto')
-			if len(results) > 0:
-				allele2Key = results[0]['_Object_key']
+			if alleleDict.has_key(allele2ID):
+				allele2Key = alleleDict[allele2ID]
 			else:
-				errorFile.write("Invalid Allele (%d): %s\n" % (lineNum, allele2ID))
-				error = 1
+				results = db.sql('select _Object_key from ALL_Acc_View where accid = "%s"' % (allele2ID), 'auto')
+				if len(results) > 0:
+					allele2Key = results[0]['_Object_key']
+					alleleDict[allele2ID] = allele2Key
+				else:
+					errorFile.write("Invalid Allele (%d): %s\n" % (lineNum, allele2ID))
+					error = 1
 		else:
-			allele2Key = "NULL"
+			allele2Key = 'NULL'
 
 		# get strain key; create a new strain if it doesn't exist
 
-		results = db.sql('select _Strain_key from PRB_Strain where strain = "%s"' % (strain), 'auto')
-		if len(results) > 0:
-			strainKey = results[0]['_Strain_key']
+		if strainDict.has_key(strain):
+			strainKey = strainDict[strain]
 		else:
-			# create the strain
-			newStrainKey = newStrainKey + 1
-			cmd = 'insert PRB_Strain values(%s, "%s", 0, 0, 0, getdate(), getdate())\n' % (newStrainKey, strain) + \
-				'insert MLP_Strain values(%s, -1, NULL, NULL, getdate(), getdate())\n' % (newStrainKey) + \
-				'insert MLP_Extra values(%s,NULL,NULL,NULL,NULL,getdate(),getdate())\n' % (newStrainKey)
-			db.sql(cmd, None)
-			strainKey = newStrainKey
+			results = db.sql('select _Strain_key from PRB_Strain where strain = "%s"' % (strain), 'auto')
+			if len(results) > 0:
+				strainKey = results[0]['_Strain_key']
+				strainDict[strain] = strainKey
+			else:
+				# create the strain
+				newStrainKey = newStrainKey + 1
+				cmd = 'insert PRB_Strain values(%s, "%s", 0, 0, 0, getdate(), getdate())\n' % (newStrainKey, strain) + \
+					'insert MLP_Strain values(%s, -1, NULL, NULL, getdate(), getdate())\n' % (newStrainKey) + \
+					'insert MLP_Extra values(%s,NULL,NULL,NULL,NULL,getdate(),getdate())\n' % (newStrainKey)
+				db.sql(cmd, None)
+				strainKey = newStrainKey
+				strainDict[strain] = strainKey
 
 		# get term ID
 
-		results = db.sql('select accID from VOC_Term_View where term = "%s"' % (psterm), 'auto')
-		if len(results) > 0:
-			termID = results[0]['accID']
+		if termDict.has_key(psterm):
+			termID = termDict[psterm]
 		else:
 			errorFile.write("Invalid Term (%d): %s\n" % (lineNum, psterm))
 			error = 1
@@ -350,50 +379,58 @@ def processFile():
 
 		if not error:
 			
+			gKey = '%s:%s:%s' % (strain, allele1ID, allele2ID)
+
+			if genotypeDict.has_key(gKey):
+				genotypeID = genotypeDict[gKey]
+
 			# add a genotype record (if one does not already exist)
 			# we're only adding single mutants
 
-			results = db.sql('select a.accID from GXD_AllelePair_View v, GXD_Genotype_Acc_View a ' + \
-				'where v._Marker_key = %s ' % (markerKey) + \
-				'and v._Allele_key_1 = %s ' % (allele1Key) + \
-				'and v._Allele_key_2 = %s ' % (allele2Key) + \
-				'and v._Strain_key = %s ' % (strainKey) + \
-				'and v._Genotype_key = a._Object_key ' + \
-				'and not exists (select 1 from GXD_AllelePair v2 ' + \
-				'where v._Genotype_key = v2._Genotype_key ' + \
-				'and v2.sequenceNum > 1)', 'auto')
+			else:
+				results = db.sql('select a.accID from GXD_AllelePair_View v, GXD_Genotype_Acc_View a ' + \
+					'where v._Marker_key = %s ' % (markerKey) + \
+					'and v._Allele_key_1 = %s ' % (allele1Key) + \
+					'and v._Allele_key_2 = %s ' % (allele2Key) + \
+					'and v._Strain_key = %s ' % (strainKey) + \
+					'and v._Genotype_key = a._Object_key ' + \
+					'and not exists (select 1 from GXD_AllelePair v2 ' + \
+					'where v._Genotype_key = v2._Genotype_key ' + \
+					'and v2.sequenceNum > 1)', 'auto')
 
-			# if genotype record does not exist
+				# if genotype record does not exist
 
-			if len(results) == 0:
+				if len(results) == 0:
 
-				# increment the primary key counters
-				genotypeKey = genotypeKey + 1
-				allelePairKey = allelePairKey + 1
+					# increment the primary key counters
+					genotypeKey = genotypeKey + 1
+					allelePairKey = allelePairKey + 1
 
-				# create the record
-				cmd = 'insert into GXD_Genotype ' + \
-					'values(%s, %s, 0, "%s", "%s", NULL, getdate(), getdate())\n' \
-					% (genotypeKey, strainKey, editor, editor) + \
-					'insert into GXD_AllelePair ' + \
-					'values (%s, %s, 1, %s, %s, %s, 0, getdate(), getdate())\n' \
-					% (allelePairKey, genotypeKey, allele1Key, allele2Key, markerKey)
-				db.sql(cmd, None)
+					# create the record
+					cmd = 'insert into GXD_Genotype ' + \
+						'values(%s, %s, 0, "%s", "%s", NULL, getdate(), getdate())\n' \
+						% (genotypeKey, strainKey, editor, editor) + \
+						'insert into GXD_AllelePair ' + \
+						'values (%s, %s, 1, %s, %s, %s, 0, getdate(), getdate())\n' \
+						% (allelePairKey, genotypeKey, allele1Key, allele2Key, markerKey)
+					db.sql(cmd, None)
 
-				# grab the MGI Acc ID of the new record
-				results = db.sql('select accID from GXD_Genotype_Acc_View ' + \
-					'where _Object_key = %s' % (genotypeKey), 'auto')
-				if len(results) > 0:
+					# grab the MGI Acc ID of the new record
+					results = db.sql('select accID from GXD_Genotype_Acc_View ' + \
+						'where _Object_key = %s' % (genotypeKey), 'auto')
+					if len(results) > 0:
+						genotypeID = results[0]['accID']
+						genotypeDict[gKey] = genotypeID
+					else:
+						errorFile.write("Could Not Create Genotype Record for Strain: %s\n") % (strain)
+						error = 1
+
+
+				# single mutant exists
+				elif len(results) == 1:
+					# genotype exists
 					genotypeID = results[0]['accID']
-				else:
-					errorFile.write("Could Not Create Genotype Record for Strain: %s\n") % (strain)
-					error = 1
-
-
-			# single mutant exists
-			elif len(results) == 1:
-				# genotype exists
-				genotypeID = results[0]['accID']
+					genotypeDict[gKey] = genotypeID
 
 			# write output file
 
