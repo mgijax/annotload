@@ -1,3 +1,10 @@
+TAG: annotload-1-0-15
+DATE: 07/02/2002
+STAFF: lec
+RELEASE: A
+CHANGES:
+a) fix annotload.py -O option
+
 TAG: annotload-1-0-14
 DATE: 06/14/2002
 STAFF: lec
