@@ -108,6 +108,9 @@
 #
 # History:
 #
+# lec	05/28/2002
+#	- TR 3724; fix deletion (add deletion of orphan VOC_Annot records)
+#
 # lec	01/22/2002
 #	- created
 #
@@ -359,6 +362,9 @@ def verifyMode():
 				'where e._Refs_key = %s ' % (referenceKey) + \
 				'and e._Annot_key = a._Annot_key ' + \
 				'and a._AnnotType_key = %s\n' % (annotTypeKey), None, execute = not DEBUG)
+			db.sql('delete VOC_Annot from VOC_Annot a ' + |
+				'where not exists (select 1 from VOC_Evidence e ' + \
+				'where a._Annot_key = e._Annot_key)')
 		else:
 			db.sql('delete VOC_Annot from VOC_Annot ' + \
 				'where _AnnotType_key = %s\n' % (annotTypeKey), None, execute = not DEBUG)
