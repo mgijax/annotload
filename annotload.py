@@ -129,6 +129,7 @@ import sys
 import os
 import string
 import getopt
+import regsub
 import db
 import mgi_utils
 import loadlib
@@ -360,9 +361,11 @@ def verifyAnnotType():
 	#
 	'''
 
-	global annotTypeKey
+	global annotTypeKey, annotTypeName
 
-	results = db.sql('select _AnnotType_key from VOC_AnnotType where name = %s' % (annotTypeName), 'auto')
+	annotTypeName = regsub.gsub('"', '', annotTypeName)
+
+	results = db.sql('select _AnnotType_key from VOC_AnnotType where name = "%s"' % (annotTypeName), 'auto')
 
 	if len(results) == 0:
 		exit(1, 'Invalid Annotation Type Name: %s\n' % (annotTypeName))
@@ -502,9 +505,6 @@ def setPrimaryKeys():
 
 	global annotKey, evidencePrimaryKey, noteKey
 
-	if DEBUG:
-		return
-
         results = db.sql('select maxKey = max(_Annot_key) + 1 from VOC_Annot', 'auto')
         if results[0]['maxKey'] is None:
                 annotKey = 1000
@@ -586,9 +586,6 @@ def createAnnotationRecord(objectKey, termKey, notTerm, entryDate):
 
 	global annotKey, annotDict
 
-	if DEBUG:
-		return(0)
-
 	# if an annotation already exists for the same Object/Term/Not, 
 	# use the same annotation key
 
@@ -655,9 +652,6 @@ def createEvidenceRecord(newAnnotKey, evidenceKey, referenceKey, inferredFrom, e
 
 	global evidencePrimaryKey, evidenceDict, noteKey
 
-	if DEBUG:
-		return
-
 	# make sure this is not a duplicate evidence statement
 
 	eKey = '%s:%s:%s' % (newAnnotKey, evidenceKey, referenceKey)
@@ -665,8 +659,8 @@ def createEvidenceRecord(newAnnotKey, evidenceKey, referenceKey, inferredFrom, e
 	# evidence record may exist in our dictionary already
 	# if so, it's a duplicate; let's report it
 
-	if evidenceDict.has_key(eKey) and not DEBUG:
-		errorFile.write('Duplicate Evidence Statement: %d\n' % (lineNum))
+	if evidenceDict.has_key(eKey):
+		errorFile.write('Duplicate Evidence Statement (in input file): %d\n' % (lineNum))
 		return
 
 	# not a duplicate
@@ -682,8 +676,8 @@ def createEvidenceRecord(newAnnotKey, evidenceKey, referenceKey, inferredFrom, e
 			
 	# found it in the database; it's a duplicate
 
-	if len(results) > 0 and not DEBUG:
-		errorFile.write('Duplicate Evidence Statement: %d\n' % (lineNum))
+	if len(results) > 0:
+		errorFile.write('Duplicate Evidence Statement (in database already): %d\n' % (lineNum))
 		return
 
 	# not found in the database; let's create it
@@ -692,11 +686,19 @@ def createEvidenceRecord(newAnnotKey, evidenceKey, referenceKey, inferredFrom, e
 		% (evidencePrimaryKey, newAnnotKey, evidenceKey, referenceKey, inferredFrom, \
 		   editorKey, editorKey, entryDate, entryDate))
 
+	mgiNoteSeqNum = 1
 	if len(notes) > 0:
 	    noteFile.write('%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
 		% (noteKey, evidencePrimaryKey, mgiNoteObjectKey, mgiNoteTypeKey, editorKey, editorKey, entryDate, entryDate))
-	    noteChunkFile.write('%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
-		% (noteKey, mgiNoteSeqNum, notes, editorKey, editorKey, entryDate, entryDate))
+	    while len(notes) > 255:
+	        noteChunkFile.write('%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
+		    % (noteKey, mgiNoteSeqNum, notes[:255], editorKey, editorKey, entryDate, entryDate))
+		notes = notes[255:]
+		mgiNoteSeqNum = mgiNoteSeqNum + 1
+
+	    if len(notes) > 0:
+	        noteChunkFile.write('%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
+		    % (noteKey, mgiNoteSeqNum, notes, editorKey, editorKey, entryDate, entryDate))
 	    noteKey = noteKey + 1
 
 	evidencePrimaryKey = evidencePrimaryKey + 1
