@@ -24,7 +24,7 @@
 #
 #	A tab-delimited file in the format:
 #		field 1: Accession ID of Vocabulary Term being Annotated to
-#		field 2: MGI ID of MGI Object being Annotated
+#		field 2: ID of MGI Object being Annotated (ex. MGI ID)
 #		field 3: J: (J:#####)
 #		field 4: Evidence Code Abbreviation (max length 5)
 #		field 5: Inferred From (max length 255)
@@ -32,6 +32,7 @@
 #		field 7: Editor (max length 30)
 #		field 8: Date (MM/DD/YYYY)
 #		field 9: Notes (max length 255)
+#		field 10: Logical DB Name of Object (field 2), being Annotated (default is MGI)
 #
 # Parameters:
 #	-S = database server
@@ -131,6 +132,7 @@ import string
 import getopt
 import regsub
 import db
+import accessionlib
 import mgi_utils
 import loadlib
 import vocabloadlib
@@ -163,6 +165,7 @@ annotTypeKey = 0	# VOC_AnnotType._AnnotType_key
 annotKey = 0		# VOC_Annot._Annot_key
 evidencePrimaryKey = 0	# VOC_Evidence._AnnotEvidence_key
 noteKey = 0		# MGI_Note._Note_key
+logicalDBKey = 1	# ACC_Accession._LogicalDB_key (default is "MGI", 1)
 mgiNoteObjectKey = 25	# MGI_Note._MGIType_key
 mgiNoteTypeKey = 1008	# MGI_Note._NoteType_key
 mgiNoteSeqNum = 1	# MGI_NoteChunk.sequenceNum
@@ -451,10 +454,11 @@ def verifyTerm(termID, lineNum):
 
 	return(termKey)
 
-def verifyObject(objectID, lineNum):
+def verifyObject(objectID, logicalDBKey, lineNum):
 	'''
 	# requires:
-	#	objectID - the MGI Accession ID of the Object
+	#	objectID - the ID of the Object
+	#	logicalDBKey - the logical DB of the objectID
 	#	lineNum - the line number of the record from the input file
 	#
 	# effects:
@@ -479,6 +483,7 @@ def verifyObject(objectID, lineNum):
 		results = db.sql('select a._Object_key ' + \
 			'from ACC_Accession a, VOC_AnnotType t ' + \
 			'where a.accID = "%s" ' % (objectID) + \
+			'and a._LogicalDB_key = %s ' % (logicalDBKey) + \
 			'and a._MGIType_key = t._MGIType_key ' + \
 			'and t._AnnotType_key = %s\n' % (annotTypeKey), 'auto')
 
@@ -716,6 +721,8 @@ def processFile():
 	#
 	'''
 
+	global logicalDBKey
+
 	lineNum = 0
 
 	# For each line in the input file
@@ -738,11 +745,15 @@ def processFile():
 			editor = string.strip(tokens[6])
 			entryDate = string.strip(tokens[7])
 			notes = string.strip(tokens[8])
+
+			if len(tokens) == 10:
+				logicalDBKey = accessionlib.get_LogicalDB_key(tokens[9])
+
 		except:
 			exit(1, 'Invalid Line (%d): %s\n' % (lineNum, line))
 
 		termKey = verifyTerm(termID, lineNum)
-		objectKey = verifyObject(objectID, lineNum)
+		objectKey = verifyObject(objectID, logicalDBKey, lineNum)
 		referenceKey = loadlib.verifyReference(jnum, lineNum, errorFile)
 		evidenceKey = vocabloadlib.verifyEvidence(evidence, annotTypeKey, lineNum, errorFile)
 		editorKey = loadlib.verifyUser(editor, lineNum, errorFile)
