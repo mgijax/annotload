@@ -28,7 +28,7 @@
 #		field 3: J: (J:#####)
 #		field 4: Evidence Code Abbreviation (max length 5)
 #		field 5: Inferred From (max length 255)
-#		field 6: NOT (the word "NOT" or blank)
+#		field 6: Qualifier (max length 255)
 #		field 7: Editor (max length 30)
 #		field 8: Date (MM/DD/YYYY)
 #		field 9: Notes (max length 255)
@@ -42,6 +42,8 @@
 #	-M = mode (new, append, preview)
 #	-I = input file
 #	-A = annotation type name (ex. "PhenoSlim/Genotype", "GO/Marker")
+#             the annotation type implicity defines the term vocabulary, 
+#             the evidence vocabulary and the qualifier vocabulary
 #	-R = reference (J:####) (used when mode = "new")
 #	-O = load annotations to obsolete terms (default is to NOT load them)
 #
@@ -110,6 +112,9 @@
 #	    Evidence record.
 #
 # History:
+#
+# lec	10/04/2005
+#	- TR 5188; replace isNot with _Qualifier_key in VOC_Annot.
 #
 # lec	01/28/2004
 #	- TR 3404/JSAM
@@ -567,12 +572,12 @@ def loadDictionaries():
 	for r in results:
 		termDict[r['accID']] = r['_Object_key']
 
-def createAnnotationRecord(objectKey, termKey, notTerm, entryDate):
+def createAnnotationRecord(objectKey, termKey, qualifierKey, entryDate):
 	'''
 	# requires:
 	#	objectKey - primary key of the Object
 	#	termKey - primary key of the Term
-	#	notTerm - value of the Not value (0 or 1)
+	#	qualifierKey - primary key of the Qualifier
 	#	entryDate - creation and modification date of Annotation
 	#
 	# effects:
@@ -594,7 +599,7 @@ def createAnnotationRecord(objectKey, termKey, notTerm, entryDate):
 	# if an annotation already exists for the same Object/Term/Not, 
 	# use the same annotation key
 
-	aKey = '%s:%s:%s:%s' % (annotTypeKey, objectKey, termKey, notTerm)
+	aKey = '%s:%s:%s:%s' % (annotTypeKey, objectKey, termKey, qualifierKey)
 
 	# annotation may exist in our dictionary already...
 
@@ -607,7 +612,7 @@ def createAnnotationRecord(objectKey, termKey, notTerm, entryDate):
 			'where _AnnotType_key = %s ' % (annotTypeKey) + \
 			'and _Object_key = %s ' % (objectKey) + \
 			'and _Term_key = %s ' % (termKey) + \
-			'and isNot = %s ' % (notTerm), 'auto')
+			'and _Qualifier_key = %s ' % (qualifierKey), 'auto')
 			
 		# found it in the database
 
@@ -626,7 +631,7 @@ def createAnnotationRecord(objectKey, termKey, notTerm, entryDate):
 
 			annotFile.write('%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
 			% (useAnnotKey, annotTypeKey, objectKey, termKey, \
-		   	notTerm, entryDate, entryDate))
+		   	qualifierKey, entryDate, entryDate))
 
 	return(useAnnotKey)
 
@@ -741,7 +746,7 @@ def processFile():
 			jnum = tokens[2]
 			evidence = tokens[3]
 			inferredFrom = string.strip(tokens[4])
-			notTerm = string.strip(tokens[5])
+			qualifier = string.strip(tokens[5])
 			editor = string.strip(tokens[6])
 			entryDate = string.strip(tokens[7])
 			notes = string.strip(tokens[8])
@@ -756,22 +761,17 @@ def processFile():
 		objectKey = verifyObject(objectID, logicalDBKey, lineNum)
 		referenceKey = loadlib.verifyReference(jnum, lineNum, errorFile)
 		evidenceKey = vocabloadlib.verifyEvidence(evidence, annotTypeKey, lineNum, errorFile)
+		qualifierKey = vocabloadlib.verifyQualifier(qualifier, annotTypeKey, lineNum, errorFile)
 		editorKey = loadlib.verifyUser(editor, lineNum, errorFile)
 
 		if termKey == 0 or objectKey == 0 or \
 			referenceKey == 0 or \
 			evidenceKey == 0 or \
+			qualifierKey == 0 or \
 			editorKey == 0:
 
 			# set error flag to true
 			error = 1
-
-		# Set the "not" flag
-
-		if notTerm == "NOT":
-			notTerm = "1"
-		else:
-			notTerm = "0"
 
 		# If the entry date is not given, use the current date
 
@@ -784,7 +784,7 @@ def processFile():
 
 		# if no errors, process the annotation
 
-		newAnnotKey = createAnnotationRecord(objectKey, termKey, notTerm, entryDate)
+		newAnnotKey = createAnnotationRecord(objectKey, termKey, qualifierKey, entryDate)
 
 		createEvidenceRecord(newAnnotKey, \
 			evidenceKey, \
