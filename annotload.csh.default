@@ -1,0 +1,28 @@
+#!/bin/csh -f -x
+
+#
+# Annotation Load Wrapper - Example
+#
+# Usage:
+# 	annotload.csh
+#
+# Purpose:
+#	executes annotload.py
+#
+
+setenv SCHEMADIR	your schema directory here (ex. /usr/local/mgi/live/dbutils/mgd/mgddbschema)
+setenv INPUTFILE	your inputfile here (full path)
+setenv MODE		append
+setenv ANNOTATIONTYPENAME	"Mammalian Phenotype/Genotype"
+setenv ANNOTATIONFILE		`basename ${INPUTFILE}`.annotload
+setenv DELETEREFERENCE		"J:0"
+
+source ${SCHEMADIR}/Configuration
+
+setenv ANNOTLOAD	/usr/local/mgi/live/dataload/annotload/annotload.py
+
+echo 'Annotation Load'
+date
+${ANNOTLOAD} -S${DBSERVER} -D${DBNAME} -U${DBUSER} -P${DBPASSWORDFILE} -M${MODE} -I${ANNOTATIONFILE} -A"${ANNOTATIONTYPENAME}" -R${DELETEREFERENCE}
+date
+
