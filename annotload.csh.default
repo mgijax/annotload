@@ -10,8 +10,8 @@
 #	executes annotload.py
 #
 
-setenv SCHEMADIR	$1
-setenv INPUTFILE	
+setenv SCHEMADIR	/usr/local/mgi/live/dbutils/mgd/mgddbschema
+setenv INPUTFILE	your data file
 setenv MODE		append
 setenv ANNOTATIONTYPENAME	"Mammalian Phenotype/Genotype"
 setenv ANNOTATIONFILE		`basename ${INPUTFILE}`.annotload
@@ -19,7 +19,7 @@ setenv DELETEREFERENCE		"J:0"
 
 source ${SCHEMADIR}/Configuration
 
-setenv ANNOTLOAD	/home/lec/loads/annotload-mpr
+setenv ANNOTLOAD	/usr/local/mgi/live/dataload/annotload/annotload.py
 
 echo 'Annotation Load'
 date
@@ -27,7 +27,7 @@ date
 set annotdir = `dirname $0`
 
 # load the Annotation File
-${ANNOTLOAD}/annotload.py -S${DBSERVER} -D${DBNAME} -U${DBUSER} -P${DBPASSWORDFILE} -M${MODE} -I${ANNOTATIONFILE} -A"${ANNOTATIONTYPENAME}" -R${DELETEREFERENCE}
+${ANNOTLOAD} -S${DBSERVER} -D${DBNAME} -U${DBUSER} -P${DBPASSWORDFILE} -M${MODE} -I${ANNOTATIONFILE} -A"${ANNOTATIONTYPENAME}" -R${DELETEREFERENCE}
 
 date
 
