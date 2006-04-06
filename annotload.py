@@ -135,7 +135,7 @@ import sys
 import os
 import string
 import getopt
-import regsub
+import re
 import db
 import accessionlib
 import mgi_utils
@@ -371,7 +371,7 @@ def verifyAnnotType():
 
 	global annotTypeKey, annotTypeName
 
-	annotTypeName = regsub.gsub('"', '', annotTypeName)
+	annotTypeName = re.sub('"', '', annotTypeName)
 
 	results = db.sql('select _AnnotType_key from VOC_AnnotType where name = "%s"' % (annotTypeName), 'auto')
 

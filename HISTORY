@@ -1,3 +1,11 @@
+TAG: annotload-tr7062-3
+DATE: 04/06/2005
+STAFF: lec
+RELEASE: A
+CHANGES:
+a) MGI 3.5 (TR 7062)
+b) converted regsub.gsub() to re.sub()
+
 TAG: annotload-tr7062-2
 DATE: 11/08/2005
 STAFF: lec
