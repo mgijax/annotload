@@ -164,6 +164,7 @@ passwordFileName = ''	# file name
 
 mode = ''		# processing mode
 delReference = 0	# deletion reference (J:###)
+delReferenceKey = 0	# deletion reference key
 loadObsolete = 0	# load annotations to obsolete terms?
 annotTypeName = ''	# VOC_AnnotType.name
 annotTypeKey = 0	# VOC_AnnotType._AnnotType_key
@@ -395,20 +396,20 @@ def verifyMode():
 	#
 	'''
 
-	global DEBUG
+	global DEBUG, delReferenceKey
 
 	if mode == 'new':
 
 		# verify deletion reference
 
 		if delReference != "J:0":
-			referenceKey = loadlib.verifyReference(delReference, 0, errorFile)
+			delReferenceKey = loadlib.verifyReference(delReference, 0, errorFile)
 
-			if referenceKey is None:
+			if delReferenceKey is None:
 				exit(1, 'Invalid Reference: %s\n' % (delReference))
 		
 			db.sql('delete VOC_Evidence from VOC_Annot a, VOC_Evidence e ' + \
-				'where e._Refs_key = %s ' % (referenceKey) + \
+				'where e._Refs_key = %s ' % (delReferenceKey) + \
 				'and e._Annot_key = a._Annot_key ' + \
 				'and a._AnnotType_key = %s\n' % (annotTypeKey), None, execute = not DEBUG)
 			db.sql('delete VOC_Annot from VOC_Annot a ' + \
@@ -545,7 +546,7 @@ def loadDictionaries():
 	#	nothing
 	'''
 
-	global ecodesDict, termDict
+	global ecodesDict, termDict, annotDict, evidenceDict, objectDict
 
 	results = db.sql('select e._Term_key, e.abbreviation ' + \
 			'from VOC_Term e, VOC_AnnotType t ' + \
@@ -571,6 +572,43 @@ def loadDictionaries():
 
 	for r in results:
 		termDict[r['accID']] = r['_Object_key']
+
+	# cache annotation keys for this type of annotation
+
+	results = db.sql('select _Annot_key, _Object_key, _Term_key, _Qualifier_key from VOC_Annot ' + \
+		'where _AnnotType_key = %s ' % (annotTypeKey), 'auto')
+	for r in results:
+	    key = '%s:%s:%s:%s' % (annotTypeKey, r['_Object_key'], r['_Term_key'], r['_Qualifier_key'])
+	    value = r['_Annot_key']
+	    annotDict[key] = value
+
+	# cache evidence keys for this type of annotation, given reference
+
+	cmd = 'select e._Annot_key, e._EvidenceTerm_key, e._Refs_key from VOC_Evidence e, VOC_Annot a ' + \
+	      'where a._AnnotType_key = %s ' % (annotTypeKey) + \
+	      'and a._Annot_key = e._Annot_key '
+
+	if delReferenceKey != 0:
+	    cmd = cmd + 'and _Refs_key = %s ' % (delReferenceKey)
+
+	results = db.sql(cmd, 'auto')
+	for r in results:
+	    key = '%s:%s:%s' % (r['_Annot_key'], r['_EvidenceTerm_key'], r['_Refs_key'])
+	    value = r['_Annot_key']
+	    evidenceDict[key] = value
+
+        # cache object keys
+
+	results = db.sql('select a.accID, a._Object_key ' + \
+		'from ACC_Accession a, VOC_AnnotType t ' + \
+		'where a._LogicalDB_key = %s ' % (logicalDBKey) + \
+		'and a.preferred = 1 ' + \
+		'and a._MGIType_key = t._MGIType_key ' + \
+		'and t._AnnotType_key = %s\n' % (annotTypeKey), 'auto')
+        for r in results:
+	    key = r['accID']
+	    value = r['_Object_key']
+	    objectDict[key] = value
 
 def createAnnotationRecord(objectKey, termKey, qualifierKey, entryDate):
 	'''
@@ -606,32 +644,15 @@ def createAnnotationRecord(objectKey, termKey, qualifierKey, entryDate):
 	if annotDict.has_key(aKey):
 		useAnnotKey = annotDict[aKey]
 	else:
-		# not in our dictionary, let's try to find it in the database
+		useAnnotKey = annotKey
+		annotDict[aKey] = useAnnotKey
+		annotKey = annotKey + 1
 
-		results = db.sql('select _Annot_key from VOC_Annot ' + \
-			'where _AnnotType_key = %s ' % (annotTypeKey) + \
-			'and _Object_key = %s ' % (objectKey) + \
-			'and _Term_key = %s ' % (termKey) + \
-			'and _Qualifier_key = %s ' % (qualifierKey), 'auto')
-			
-		# found it in the database
+		# create the new VOC_Annot record
 
-		if len(results) > 0:
-			useAnnotKey = results[0]['_Annot_key']
-			annotDict[aKey] = useAnnotKey
-
-		# not found in the database; let's create it
-
-		else:
-			useAnnotKey = annotKey
-			annotDict[aKey] = useAnnotKey
-			annotKey = annotKey + 1
-
-			# create the new VOC_Annot record
-
-			annotFile.write('%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
+		annotFile.write('%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
 			% (useAnnotKey, annotTypeKey, objectKey, termKey, \
-		   	qualifierKey, entryDate, entryDate))
+	   	qualifierKey, entryDate, entryDate))
 
 	return(useAnnotKey)
 
@@ -676,21 +697,6 @@ def createEvidenceRecord(newAnnotKey, evidenceKey, referenceKey, inferredFrom, e
 	# not a duplicate
 
 	evidenceDict[eKey] = eKey
-
-	# not in our dictionary, let's try to find it in the database
-
-	results = db.sql('select _Annot_key from VOC_Evidence ' + \
-		'where _Annot_key = %s ' % (newAnnotKey) + \
-		'and _EvidenceTerm_key = %s ' % (evidenceKey) + \
-		'and _Refs_key = %s ' % (referenceKey), 'auto')
-			
-	# found it in the database; it's a duplicate
-
-	if len(results) > 0:
-		errorFile.write('Duplicate Evidence Statement (in database already): %d\n' % (lineNum))
-		return
-
-	# not found in the database; let's create it
 
 	evidenceFile.write('%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
 		% (evidencePrimaryKey, newAnnotKey, evidenceKey, referenceKey, inferredFrom, \
