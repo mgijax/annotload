@@ -1,28 +1,30 @@
+TAG: annotload-3-5-0-3
+DATE: 09/12/2006
+STAFF: lec
+CHANGES:
+a) pre-load annotDict, evidenceDict, objectDict; faster performance
+
 TAG: annotload-3-5-0-2
 DATE: 08/30/2006
 STAFF: lec
-RELEASE: A
 CHANGES:
 a) pre-load annotDict, evidenceDict, objectDict; faster performance
 
 TAG: annotload-3-5-0-1
 DATE: 04/20/2006
 STAFF: lec
-RELEASE: A
 CHANGES:
 a) MGi 3.5; mergee tr7062 branch
 
 TAG: annotload-3-2-0-3
 DATE: 11/21/2005
 STAFF: lec
-RELEASE: A
 CHANGES:
 a) annotload.csh.default
 
 TAG: annotload-tr7062-3
 DATE: 04/06/2005
 STAFF: lec
-RELEASE: A
 CHANGES:
 a) MGI 3.5 (TR 7062)
 b) converted regsub.gsub() to re.sub()
@@ -30,173 +32,148 @@ b) converted regsub.gsub() to re.sub()
 TAG: annotload-tr7062-2
 DATE: 11/08/2005
 STAFF: lec
-RELEASE: A
 CHANGES:
 a) MGI 3.5 (TR 7062)
 
 TAG: annotload-tr7062-1
 DATE: 10/14/2005
 STAFF: lec
-RELEASE: A
 CHANGES:
 a) MGI 3.5 (TR 7062)
 
 TAG: annotload-BP-tr7062
 DATE: 10/13/2005
 STAFF: lec
-RELEASE: A
 CHANGES:
 a) branch point tag for MGI 3.5 (TR 7062)
 
 TAG: annotload-3-2-0-2
 DATE: 05/25/2005
 STAFF: lec
-RELEASE: A
 CHANGES:
 a) added field 10 (logicalDB)
 
 TAG: annotload-3-2-0-1
 DATE: 04/13/2005
 STAFF: lec
-RELEASE: A
 CHANGES:
 a) MPR merge
 
 TAG: annotload-mpr-1
 DATE: 03/22/2005
 STAFF: lec
-RELEASE: A
 CHANGES:
 a) MPR
 
 TAG: annotload-mpr-BP
 DATE: 03/16/2005
 STAFF: lec
-RELEASE: A
 CHANGES:
 a) branch point tag for MPR
 
 TAG: annotload-3-0-4
 DATE: 03/07/2005
 STAFF: lec
-RELEASE: A
 CHANGES:
 a) annotload.py; remove obsolete verifyEvidence
 
 TAG: annotload-3-0-3
 DATE: 09/08/2004
 STAFF: lec
-RELEASE: A
 CHANGES:
 a) annotload.py; check note length
 
 TAG: annotload-3-0-2
 DATE: 03/23/2004
 STAFF: lec
-RELEASE: A
 CHANGES:
 a) JSAM; annotload.py
 
 TAG: annotload-3-0-1
 DATE: 02/18/2004
 STAFF: lec
-RELEASE: A
 CHANGES:
 a) JSAM; VOC_Evidence, MGI_Note (editorKey)
 
 TAG: annotload-3-0-0
 DATE: 01/28/2003
 STAFF: lec
-RELEASE: A
 CHANGES:
 a) JSAM; VOC_Evidence, MGI_Note (editorKey)
 
 TAG: annotload-2-0-1
 DATE: 01/05/2003
 STAFF: lec
-RELEASE: A
 CHANGES:
 a) fixed delete of VOC_Annot (TR 5461)
 
 TAG: annotload-2-0-0
 DATE: 12/19/2002
 STAFF: lec
-RELEASE: A
 CHANGES:
 a) VOC_Evidence changed; added _AnnotEvidence_key
 
 TAG: annotload-1-0-16
 DATE: 10/08/2002
 STAFF: lec
-RELEASE: A
 CHANGES:
 a) add db.useOneConnection
 
 TAG: annotload-1-0-15
 DATE: 07/02/2002
 STAFF: lec
-RELEASE: A
 CHANGES:
 a) fix annotload.py -O option
 
 TAG: annotload-1-0-14
 DATE: 06/14/2002
 STAFF: lec
-RELEASE: A
 CHANGES:
 a) TR 3744; exclude load of obsoleted Terms
 
 TAG: annotload-1-0-12, annotload-1-0-13
 DATE: 05/28/2002, 05/30/2002
 STAFF: lec
-RELEASE: A
 CHANGES:
 a) TR 3724; fix deletion of orphan VOC_Annot records
 
 TAG: annotload-1-0-11
 DATE: 03/08/2002
 STAFF: lec
-RELEASE: A
 CHANGES:
 a) fix delete for specific reference
 
 TAG: annotload-1-0-7, annotload-1-0-8, annotload-1-0-9, annotload-1-0-10
 DATE: 02/21/2002
 STAFF: lec
-RELEASE: A
 CHANGES:
 a) ? means Unknown Allele State
 
 TAG: annotload-1-0-6
 DATE: 02/20/2002
 STAFF: lec
-RELEASE: A
 CHANGES:
 a) ? means Unknown Allele State
 
 TAG: annotload-1-0-5
 DATE: 02/07/2002
 STAFF: lec
-RELEASE: A
 CHANGES:
 a) ap -> ajp
 
 TAG: annotload-1-0-2, annotload-1-0-4
 DATE: 02/06/2002
 STAFF: lec
-RELEASE: A
 CHANGES:
 a) use ec ND instead of NAS for Unknown terms
 
 TAG: annotload-1-0-1
 DATE: 02/05/2002
 STAFF: lec
-RELEASE: A
 CHANGES:
 a) tweaks for placing output files into current directory
 
 TAG: annotload-1-0-0
 DATE: 02/04/2002
 STAFF: lec
-RELEASE: A
 CHANGES: new
