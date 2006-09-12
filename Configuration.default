@@ -1,0 +1,14 @@
+#!/bin/csh -f
+
+#
+# Configuration file
+#
+
+if ( ${?MGICONFIG} == 0 ) then
+	setenv MGICONFIG /usr/local/mgi/live/mgiconfig
+endif
+
+source ${MGICONFIG}/master.config.csh
+
+setenv ANNOTLOAD	${DATALOAD}/annotload/annotload.py
+
