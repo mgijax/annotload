@@ -4,7 +4,7 @@
 # An example of a task-specific configuration file
 #
 
-cd `dirname $0` && source ./Configuration
+source ./Configuration
 
 setenv ANNOTDATADIR		/data/loads/swissprot/swissload/data
 setenv ANNOTMODE		preview
