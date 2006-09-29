@@ -4,7 +4,7 @@
 # An example of a task-specific configuration file
 #
 
-source ./Configuration
+source ${ANNOTLOAD}/Configuration
 
 setenv ANNOTDATADIR		/data/loads/swissprot/swissload/data
 setenv ANNOTMODE		preview
