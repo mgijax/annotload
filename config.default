@@ -9,7 +9,8 @@ source ${ANNOTLOAD}/Configuration
 setenv ANNOTDATADIR		/data/loads/swissprot/swissload/data
 setenv ANNOTMODE		preview
 setenv ANNOTTYPENAME		"InterPro/Marker"
-setenv ANNOTFILE		${ANNOTDATADIR}/interprosp.txt
-setenv ANNOTLOG			${ANNOTFILE}.log
+setenv ANNOTINPUTFILE		${ANNOTDATADIR}/interprosp.txt
+setenv ANNOTLOG			${ANNOTINPUTFILE}.log
 setenv DELETEREFERENCE		"J:0"
+setenv ANNOTOBSOLETE		0
 

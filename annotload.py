@@ -35,17 +35,6 @@
 #		field 10: Logical DB Name of Object (field 2), being Annotated (default is MGI)
 #
 # Parameters:
-#	-S = database server
-#	-D = database
-#	-U = user
-#	-P = password file
-#	-M = mode (new, append, preview)
-#	-I = input file
-#	-A = annotation type name (ex. "PhenoSlim/Genotype", "GO/Marker")
-#             the annotation type implicity defines the term vocabulary, 
-#             the evidence vocabulary and the qualifier vocabulary
-#	-R = reference (J:####) (used when mode = "new")
-#	-O = load annotations to obsolete terms (default is to NOT load them)
 #
 #	processing modes:
 #		new - delete the Annotations for the given Reference and Annotation Type.
@@ -134,7 +123,6 @@
 import sys
 import os
 import string
-import getopt
 import re
 import db
 import accessionlib
@@ -143,6 +131,14 @@ import loadlib
 import vocabloadlib
 
 #globals
+
+user = os.environ['MGD_DBUSER']
+passwordFileName = os.environ['MGD_DBPASSWORDFILE']
+mode = os.environ['ANNOTMODE']
+inputFileName = os.environ['ANNOTINPUTFILE']
+annotTypeName = os.environ['ANNOTTYPENAME']
+delReference = os.environ['DELETEREFERENCE']
+loadObsolete = os.environ['ANNOTOBSOLETE']
 
 DEBUG = 0		# set DEBUG to false unless preview mode is selected
 
@@ -160,13 +156,8 @@ annotFileName = ''	# file name
 evidenceFileName = ''	# file name
 noteFileName = ''	# file name
 noteChunkFileName=  ''	# file name
-passwordFileName = ''	# file name
 
-mode = ''		# processing mode
-delReference = 0	# deletion reference (J:###)
 delReferenceKey = 0	# deletion reference key
-loadObsolete = 0	# load annotations to obsolete terms?
-annotTypeName = ''	# VOC_AnnotType.name
 annotTypeKey = 0	# VOC_AnnotType._AnnotType_key
 annotKey = 0		# VOC_Annot._Annot_key
 evidencePrimaryKey = 0	# VOC_Evidence._AnnotEvidence_key
@@ -185,28 +176,6 @@ evidenceDict = {}	# dictionary of evidence records for quick lookup
 
 loaddate = loadlib.loaddate
 
-def showUsage():
-	'''
-	# requires:
-	#
-	# effects:
-	# Displays the correct usage of this program and exits
-	# with status of 1.
-	#
-	# returns:
-	'''
- 
-	usage = 'usage: %s -S server\n' % sys.argv[0] + \
-		'-D database\n' + \
-		'-U user\n' + \
-		'-P password file\n' + \
-		'-M mode\n' + \
-		'-I input file\n' + \
-		'-A annotation type name\n' + \
-		'-R reference\n' + \
-		'-O load annotations to obsolete terms\n'
-	exit(1, usage)
- 
 def exit(status, message = None):
 	'''
 	# requires: status, the numeric exit status (integer)
@@ -248,52 +217,13 @@ def init():
 	'''
  
 	global inputFile, diagFile, errorFile, errorFileName, diagFileName
-	global annotFile, annotFileName, evidenceFile, evidenceFileName, passwordFileName
+	global annotFile, annotFileName, evidenceFile, evidenceFileName
 	global noteFile, noteFileName, noteChunkFile, noteChunkFileName
-	global delReference, loadObsolete, mode
 	global annotTypeKey, annotKey, annotTypeName, evidencePrimaryKey, noteKey
  
-	try:
-		optlist, args = getopt.getopt(sys.argv[1:], 'S:D:U:P:M:I:A:R:O')
-	except:
-		showUsage()
- 
-	#
-	# Set server, database, user, passwords depending on options
-	# specified by user.
-	#
- 
-	server = None
-	database = None
-	user = None
-	password = None
- 
-	for opt in optlist:
-                if opt[0] == '-S':
-                        server = opt[1]
-                elif opt[0] == '-D':
-                        database = opt[1]
-                elif opt[0] == '-U':
-                        user = opt[1]
-                elif opt[0] == '-P':
-			passwordFileName = opt[1]
-                elif opt[0] == '-M':
-                        mode = opt[1]
-                elif opt[0] == '-I':
-                        inputFileName = opt[1]
-                elif opt[0] == '-A':
-                        annotTypeName = opt[1]
-                elif opt[0] == '-R':
-                        delReference = opt[1]
-                elif opt[0] == '-O':
-                        loadObsolete = 1
-                else:
-                        showUsage()
- 
-	# Initialize db.py DBMS parameters
-        password = string.strip(open(passwordFileName, 'r').readline())
-	db.set_sqlLogin(user, password, server, database)
 	db.useOneConnection(1)
+        db.set_sqlUser(user)
+        db.set_sqlPasswordFromFile(passwordFileName)
  
 	fdate = mgi_utils.date('%m%d%Y')	# current date
 	head, tail = os.path.split(inputFileName) 
@@ -346,9 +276,8 @@ def init():
 	db.set_sqlLogFD(diagFile)
 
 	diagFile.write('Start Date/Time: %s\n' % (mgi_utils.date()))
-	diagFile.write('Server: %s\n' % (server))
-	diagFile.write('Database: %s\n' % (database))
-	diagFile.write('User: %s\n' % (user))
+        diagFile.write('Server: %s\n' % (db.get_sqlServer()))
+        diagFile.write('Database: %s\n' % (db.get_sqlDatabase()))
 	diagFile.write('Annotation Type Name: %s\n' % (annotTypeName))
 	diagFile.write('Annotation File: %s\n' % (inputFileName))
 	diagFile.write('Deletion Reference: %s\n\n' % (delReference))
