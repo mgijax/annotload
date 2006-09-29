@@ -776,8 +776,6 @@ def bcpFiles():
 	os.system(bcpNote)
 	os.system(bcpNoteChunk)
 
-#	db.sql('dump transaction %s with truncate_only' % (db.get_sqlDatabase()), None)
-
 #
 # Main
 #
