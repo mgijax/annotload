@@ -10,5 +10,3 @@ endif
 
 source ${MGICONFIG}/master.config.csh
 
-setenv ANNOTLOAD	${DATALOAD}/annotload/annotload.py
-
