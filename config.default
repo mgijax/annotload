@@ -12,5 +12,6 @@ setenv ANNOTTYPENAME		"InterPro/Marker"
 setenv ANNOTINPUTFILE		${ANNOTDATADIR}/interprosp.txt
 setenv ANNOTLOG			${ANNOTINPUTFILE}.log
 setenv DELETEREFERENCE		"J:0"
+setenv DELETEUSER		none
 setenv ANNOTOBSOLETE		0
 

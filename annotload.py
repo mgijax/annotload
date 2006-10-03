@@ -32,14 +32,13 @@
 #		field 7: Editor (max length 30)
 #		field 8: Date (MM/DD/YYYY)
 #		field 9: Notes (max length 255)
-#		field 10: Logical DB Name of Object (field 2), being Annotated (default is MGI)
+#		field 10: Logical DB Name of Object (field 2), being Annotated (default is MGI); optional
 #
 # Parameters:
 #
 #	processing modes:
-#		new - delete the Annotations for the given Reference and Annotation Type.
-#		      if reference = 0, then delete all Annotations
-#		      of the specified Annotation Type
+#		new - delete the Annotations for the given Reference or User, and Annotation Type.
+#		      if reference = 0 and user is none, then delete all Annotations of the specified Annotation Type
 #
 #		append - add Annotations from the input file (does not check for duplicates)
 #
@@ -61,7 +60,8 @@
 #
 #	2. Verify Mode.
 #		if mode = new and reference > 0: delete all Annotations for Annotation Type/Reference.
-#		if mode = new and reference = 0: delete all Annotations for Annotation Type.
+#		if mode = new and user != none : delete all Annotations for Annotation Type/User.
+#		if mode = new and reference = 0 and user = none: delete all Annotations for Annotation Type.
 #		if mode = append: do nothing special
 #		if mode = preview:  set "DEBUG" to True
 #
@@ -102,6 +102,10 @@
 #
 # History:
 #
+# lec	10/02/2006
+#	- add option to delete records by a specified User.  Deletion by a Reference is
+#         checked first.
+#
 # lec	10/04/2005
 #	- TR 5188; replace isNot with _Qualifier_key in VOC_Annot.
 #
@@ -132,12 +136,15 @@ import vocabloadlib
 
 #globals
 
+# from configuration file
+
 user = os.environ['MGD_DBUSER']
 passwordFileName = os.environ['MGD_DBPASSWORDFILE']
 mode = os.environ['ANNOTMODE']
 inputFileName = os.environ['ANNOTINPUTFILE']
 annotTypeName = os.environ['ANNOTTYPENAME']
-delReference = os.environ['DELETEREFERENCE']
+delByReference = os.environ['DELETEREFERENCE']
+delByUser = os.environ['DELETEUSER']
 loadObsolete = os.environ['ANNOTOBSOLETE']
 
 DEBUG = 0		# set DEBUG to false unless preview mode is selected
@@ -157,7 +164,8 @@ evidenceFileName = ''	# file name
 noteFileName = ''	# file name
 noteChunkFileName=  ''	# file name
 
-delReferenceKey = 0	# deletion reference key
+delByReferenceKey = 0	# deletion reference key
+delByUserKey = 0	# deletion user key
 annotTypeKey = 0	# VOC_AnnotType._AnnotType_key
 annotKey = 0		# VOC_Annot._Annot_key
 evidencePrimaryKey = 0	# VOC_Evidence._AnnotEvidence_key
@@ -280,7 +288,8 @@ def init():
         diagFile.write('Database: %s\n' % (db.get_sqlDatabase()))
 	diagFile.write('Annotation Type Name: %s\n' % (annotTypeName))
 	diagFile.write('Annotation File: %s\n' % (inputFileName))
-	diagFile.write('Deletion Reference: %s\n\n' % (delReference))
+	diagFile.write('Deletion Reference: %s\n\n' % (delByReference))
+	diagFile.write('Deletion User: %s\n\n' % (delByUser))
 
 	errorFile.write('Start Date/Time: %s\n\n' % (mgi_utils.date()))
 
@@ -325,26 +334,54 @@ def verifyMode():
 	#
 	'''
 
-	global DEBUG, delReferenceKey
+	global DEBUG, delByReferenceKey, delByUserKey
 
 	if mode == 'new':
 
 		# verify deletion reference
 
-		if delReference != "J:0":
-			delReferenceKey = loadlib.verifyReference(delReference, 0, errorFile)
+		if delByReference != "J:0":
 
-			if delReferenceKey is None:
-				exit(1, 'Invalid Reference: %s\n' % (delReference))
+			delByReferenceKey = loadlib.verifyReference(delByReference, 0, errorFile)
+
+			if delByReferenceKey is None:
+				exit(1, 'Invalid Reference: %s\n' % (delByReference))
 		
-			db.sql('delete VOC_Evidence from VOC_Annot a, VOC_Evidence e ' + \
-				'where e._Refs_key = %s ' % (delReferenceKey) + \
+			db.sql('select e._Annot_key into #toDelete ' + \
+				'from VOC_Annot a, VOC_Evidence e ' + \
+				'where e._Refs_key = %s ' % (delByReferenceKey) + \
 				'and e._Annot_key = a._Annot_key ' + \
 				'and a._AnnotType_key = %s\n' % (annotTypeKey), None, execute = not DEBUG)
-			db.sql('delete VOC_Annot from VOC_Annot a ' + \
-				'where a._AnnotType_key = %s ' % (annotTypeKey) + \
-				'and not exists (select 1 from VOC_Evidence e ' + \
-				'where a._Annot_key = e._Annot_key)', None, execute = not DEBUG)
+
+			db.sql('create index idx1 on #toDelete(_Annot_key)', None)
+
+			db.sql('delete VOC_Evidence from #toDelete d, VOC_Evidence e ' + \
+				'where d._Annot_key = e._Annot_key', None, execute = not DEBUG)
+
+			db.sql('delete VOC_Annot from #toDelete d, VOC_Annot a ' + \
+				'where d._Annot_key = a._Annot_key', None, execute = not DEBUG)
+
+		elif delByUser != "none":
+
+			delByUserKey = loadlib.verifyUser(delByUser, 0, errorFile)
+
+			if delByUserKey is None:
+				exit(1, 'Invalid User: %s\n' % (delByUser))
+		
+			db.sql('select e._Annot_key into #toDelete ' + \
+				'from VOC_Annot a, VOC_Evidence e ' + \
+				'where e._CreatedBy_key = %s ' % (delByUserKey) + \
+				'and e._Annot_key = a._Annot_key ' + \
+				'and a._AnnotType_key = %s\n' % (annotTypeKey), None, execute = not DEBUG)
+
+			db.sql('create index idx1 on #toDelete(_Annot_key)', None)
+
+			db.sql('delete VOC_Evidence from #toDelete d, VOC_Evidence e ' + \
+				'where d._Annot_key = e._Annot_key', None, execute = not DEBUG)
+
+			db.sql('delete VOC_Annot from #toDelete d, VOC_Annot a ' + \
+				'where d._Annot_key = a._Annot_key', None, execute = not DEBUG)
+
 		else:
 			db.sql('delete VOC_Annot from VOC_Annot ' + \
 				'where _AnnotType_key = %s\n' % (annotTypeKey), None, execute = not DEBUG)
@@ -511,14 +548,11 @@ def loadDictionaries():
 	    value = r['_Annot_key']
 	    annotDict[key] = value
 
-	# cache evidence keys for this type of annotation, given reference
+	# cache evidence keys for this type of annotation
 
 	cmd = 'select e._Annot_key, e._EvidenceTerm_key, e._Refs_key from VOC_Evidence e, VOC_Annot a ' + \
 	      'where a._AnnotType_key = %s ' % (annotTypeKey) + \
 	      'and a._Annot_key = e._Annot_key '
-
-	if delReferenceKey != 0:
-	    cmd = cmd + 'and _Refs_key = %s ' % (delReferenceKey)
 
 	results = db.sql(cmd, 'auto')
 	for r in results:
@@ -696,7 +730,7 @@ def processFile():
 		objectKey = verifyObject(objectID, logicalDBKey, lineNum)
 		referenceKey = loadlib.verifyReference(jnum, lineNum, errorFile)
 		evidenceKey = vocabloadlib.verifyEvidence(evidence, annotTypeKey, lineNum, errorFile)
-		qualifierKey = vocabloadlib.verifyQualifier(qualifier, annotTypeKey, lineNum, errorFile)
+		qualifierKey = vocabloadlib.verifyQualifier(qualifier, annotTypeKey, 0, lineNum, errorFile)
 		editorKey = loadlib.verifyUser(editor, lineNum, errorFile)
 
 		if termKey == 0 or objectKey == 0 or \
