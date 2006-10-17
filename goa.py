@@ -69,6 +69,7 @@ unresolvedAErrorFile = reportlib.init('unresolvedA', outputdir = os.environ['GOA
 unresolvedBErrorFile = reportlib.init('unresolvedB', outputdir = os.environ['GOADIR'], printHeading = 0, fileExt = '.error')
 mgiErrorFile = reportlib.init('mgi', outputdir = os.environ['GOADIR'], printHeading = 0, fileExt = '.error')
 pubmedErrorFile = reportlib.init('pubmed', outputdir = os.environ['GOADIR'], printHeading = 0, fileExt = '.error')
+pubmedISSErrorFile = reportlib.init('pubmedISS', outputdir = os.environ['GOADIR'], printHeading = 0, fileExt = '.error')
 dupErrorFile = reportlib.init('duplicates', outputdir = os.environ['GOADIR'], printHeading = 0, fileExt = '.error')
 mgiFile = reportlib.init('goa', outputdir = os.environ['GOADIR'], printHeading = 0, fileExt = '.mgi')
 annotFile = reportlib.init('goa', outputdir = os.environ['GOADIR'], printHeading = 0, fileExt = '.annot')
@@ -280,17 +281,23 @@ for line in inFile.readlines():
 	    dupErrorFile.write(line)
 	    continue
 
-    if not pubmed.has_key(refID):
-        pubmedErrorFile.write(line)
-#	continue
-#    else:
-#	jnumID = pubmed[refID]
-
     mgiFile.write(mgiLine % (databaseID, m['mgiID'], m['symbol'], notValue, goID, refID, evidence, inferredFrom,\
 	dag, m['name'], synonyms, m['markerType'], taxID, modDate, assignedBy))
 
-#    notValue = re.sub('_', ' ', notValue)
-#    annotFile.write(annotLine % (goID, m['mgiID'], jnumID, evidence, notValue, createdBy, loaddate))
+    # resolve pubmed ID to MGI J:
+
+    if not pubmed.has_key(refID):
+        if string.find(refID, 'PMID:') >= 0:
+	    if evidence == 'ISS':
+	        pubmedISSErrorFile.write(line)
+            else:
+	        pubmedErrorFile.write(line)
+	continue
+    else:
+	jnumID = pubmed[refID]
+
+    notValue = re.sub('_', ' ', notValue)
+    annotFile.write(annotLine % (goID, m['mgiID'], jnumID, evidence, notValue, createdBy, loaddate))
 
 inFile.close()
 
@@ -298,6 +305,7 @@ reportlib.finish_nonps(unresolvedAErrorFile)
 reportlib.finish_nonps(unresolvedBErrorFile)
 reportlib.finish_nonps(mgiErrorFile)
 reportlib.finish_nonps(pubmedErrorFile)
+reportlib.finish_nonps(pubmedISSErrorFile)
 reportlib.finish_nonps(dupErrorFile)
 reportlib.finish_nonps(mgiFile)
 reportlib.finish_nonps(annotFile)
