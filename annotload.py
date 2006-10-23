@@ -32,25 +32,13 @@
 #		field 7: Editor (max length 30)
 #		field 8: Date (MM/DD/YYYY)
 #		field 9: Notes (max length 255)
-#		field 10: Logical DB Name of Object (field 2), being Annotated (default is MGI)
+#		field 10: Logical DB Name of Object (field 2), being Annotated (default is MGI); optional
 #
 # Parameters:
-#	-S = database server
-#	-D = database
-#	-U = user
-#	-P = password file
-#	-M = mode (new, append, preview)
-#	-I = input file
-#	-A = annotation type name (ex. "PhenoSlim/Genotype", "GO/Marker")
-#             the annotation type implicity defines the term vocabulary, 
-#             the evidence vocabulary and the qualifier vocabulary
-#	-R = reference (J:####) (used when mode = "new")
-#	-O = load annotations to obsolete terms (default is to NOT load them)
 #
 #	processing modes:
-#		new - delete the Annotations for the given Reference and Annotation Type.
-#		      if reference = 0, then delete all Annotations
-#		      of the specified Annotation Type
+#		new - delete the Annotations for the given Reference or User, and Annotation Type.
+#		      if reference = 0 and user is none, then delete all Annotations of the specified Annotation Type
 #
 #		append - add Annotations from the input file (does not check for duplicates)
 #
@@ -72,7 +60,8 @@
 #
 #	2. Verify Mode.
 #		if mode = new and reference > 0: delete all Annotations for Annotation Type/Reference.
-#		if mode = new and reference = 0: delete all Annotations for Annotation Type.
+#		if mode = new and user != none : delete all Annotations for Annotation Type/User.
+#		if mode = new and reference = 0 and user = none: delete all Annotations for Annotation Type.
 #		if mode = append: do nothing special
 #		if mode = preview:  set "DEBUG" to True
 #
@@ -113,6 +102,10 @@
 #
 # History:
 #
+# lec	10/02/2006
+#	- add option to delete records by a specified User.  Deletion by a Reference is
+#         checked first.
+#
 # lec	10/04/2005
 #	- TR 5188; replace isNot with _Qualifier_key in VOC_Annot.
 #
@@ -134,7 +127,6 @@
 import sys
 import os
 import string
-import getopt
 import re
 import db
 import accessionlib
@@ -143,6 +135,17 @@ import loadlib
 import vocabloadlib
 
 #globals
+
+# from configuration file
+
+user = os.environ['MGD_DBUSER']
+passwordFileName = os.environ['MGD_DBPASSWORDFILE']
+mode = os.environ['ANNOTMODE']
+inputFileName = os.environ['ANNOTINPUTFILE']
+annotTypeName = os.environ['ANNOTTYPENAME']
+delByReference = os.environ['DELETEREFERENCE']
+delByUser = os.environ['DELETEUSER']
+loadObsolete = os.environ['ANNOTOBSOLETE']
 
 DEBUG = 0		# set DEBUG to false unless preview mode is selected
 
@@ -160,13 +163,9 @@ annotFileName = ''	# file name
 evidenceFileName = ''	# file name
 noteFileName = ''	# file name
 noteChunkFileName=  ''	# file name
-passwordFileName = ''	# file name
 
-mode = ''		# processing mode
-delReference = 0	# deletion reference (J:###)
-delReferenceKey = 0	# deletion reference key
-loadObsolete = 0	# load annotations to obsolete terms?
-annotTypeName = ''	# VOC_AnnotType.name
+delByReferenceKey = 0	# deletion reference key
+delByUserKey = 0	# deletion user key
 annotTypeKey = 0	# VOC_AnnotType._AnnotType_key
 annotKey = 0		# VOC_Annot._Annot_key
 evidencePrimaryKey = 0	# VOC_Evidence._AnnotEvidence_key
@@ -185,28 +184,6 @@ evidenceDict = {}	# dictionary of evidence records for quick lookup
 
 loaddate = loadlib.loaddate
 
-def showUsage():
-	'''
-	# requires:
-	#
-	# effects:
-	# Displays the correct usage of this program and exits
-	# with status of 1.
-	#
-	# returns:
-	'''
- 
-	usage = 'usage: %s -S server\n' % sys.argv[0] + \
-		'-D database\n' + \
-		'-U user\n' + \
-		'-P password file\n' + \
-		'-M mode\n' + \
-		'-I input file\n' + \
-		'-A annotation type name\n' + \
-		'-R reference\n' + \
-		'-O load annotations to obsolete terms\n'
-	exit(1, usage)
- 
 def exit(status, message = None):
 	'''
 	# requires: status, the numeric exit status (integer)
@@ -248,52 +225,13 @@ def init():
 	'''
  
 	global inputFile, diagFile, errorFile, errorFileName, diagFileName
-	global annotFile, annotFileName, evidenceFile, evidenceFileName, passwordFileName
+	global annotFile, annotFileName, evidenceFile, evidenceFileName
 	global noteFile, noteFileName, noteChunkFile, noteChunkFileName
-	global delReference, loadObsolete, mode
 	global annotTypeKey, annotKey, annotTypeName, evidencePrimaryKey, noteKey
  
-	try:
-		optlist, args = getopt.getopt(sys.argv[1:], 'S:D:U:P:M:I:A:R:O')
-	except:
-		showUsage()
- 
-	#
-	# Set server, database, user, passwords depending on options
-	# specified by user.
-	#
- 
-	server = None
-	database = None
-	user = None
-	password = None
- 
-	for opt in optlist:
-                if opt[0] == '-S':
-                        server = opt[1]
-                elif opt[0] == '-D':
-                        database = opt[1]
-                elif opt[0] == '-U':
-                        user = opt[1]
-                elif opt[0] == '-P':
-			passwordFileName = opt[1]
-                elif opt[0] == '-M':
-                        mode = opt[1]
-                elif opt[0] == '-I':
-                        inputFileName = opt[1]
-                elif opt[0] == '-A':
-                        annotTypeName = opt[1]
-                elif opt[0] == '-R':
-                        delReference = opt[1]
-                elif opt[0] == '-O':
-                        loadObsolete = 1
-                else:
-                        showUsage()
- 
-	# Initialize db.py DBMS parameters
-        password = string.strip(open(passwordFileName, 'r').readline())
-	db.set_sqlLogin(user, password, server, database)
 	db.useOneConnection(1)
+        db.set_sqlUser(user)
+        db.set_sqlPasswordFromFile(passwordFileName)
  
 	fdate = mgi_utils.date('%m%d%Y')	# current date
 	head, tail = os.path.split(inputFileName) 
@@ -346,12 +284,12 @@ def init():
 	db.set_sqlLogFD(diagFile)
 
 	diagFile.write('Start Date/Time: %s\n' % (mgi_utils.date()))
-	diagFile.write('Server: %s\n' % (server))
-	diagFile.write('Database: %s\n' % (database))
-	diagFile.write('User: %s\n' % (user))
+        diagFile.write('Server: %s\n' % (db.get_sqlServer()))
+        diagFile.write('Database: %s\n' % (db.get_sqlDatabase()))
 	diagFile.write('Annotation Type Name: %s\n' % (annotTypeName))
 	diagFile.write('Annotation File: %s\n' % (inputFileName))
-	diagFile.write('Deletion Reference: %s\n\n' % (delReference))
+	diagFile.write('Deletion Reference: %s\n\n' % (delByReference))
+	diagFile.write('Deletion User: %s\n\n' % (delByUser))
 
 	errorFile.write('Start Date/Time: %s\n\n' % (mgi_utils.date()))
 
@@ -396,26 +334,54 @@ def verifyMode():
 	#
 	'''
 
-	global DEBUG, delReferenceKey
+	global DEBUG, delByReferenceKey, delByUserKey
 
 	if mode == 'new':
 
 		# verify deletion reference
 
-		if delReference != "J:0":
-			delReferenceKey = loadlib.verifyReference(delReference, 0, errorFile)
+		if delByReference != "J:0":
 
-			if delReferenceKey is None:
-				exit(1, 'Invalid Reference: %s\n' % (delReference))
+			delByReferenceKey = loadlib.verifyReference(delByReference, 0, errorFile)
+
+			if delByReferenceKey is None:
+				exit(1, 'Invalid Reference: %s\n' % (delByReference))
 		
-			db.sql('delete VOC_Evidence from VOC_Annot a, VOC_Evidence e ' + \
-				'where e._Refs_key = %s ' % (delReferenceKey) + \
+			db.sql('select e._Annot_key into #toDelete ' + \
+				'from VOC_Annot a, VOC_Evidence e ' + \
+				'where e._Refs_key = %s ' % (delByReferenceKey) + \
 				'and e._Annot_key = a._Annot_key ' + \
 				'and a._AnnotType_key = %s\n' % (annotTypeKey), None, execute = not DEBUG)
-			db.sql('delete VOC_Annot from VOC_Annot a ' + \
-				'where a._AnnotType_key = %s ' % (annotTypeKey) + \
-				'and not exists (select 1 from VOC_Evidence e ' + \
-				'where a._Annot_key = e._Annot_key)', None, execute = not DEBUG)
+
+			db.sql('create index idx1 on #toDelete(_Annot_key)', None)
+
+			db.sql('delete VOC_Evidence from #toDelete d, VOC_Evidence e ' + \
+				'where d._Annot_key = e._Annot_key', None, execute = not DEBUG)
+
+			db.sql('delete VOC_Annot from #toDelete d, VOC_Annot a ' + \
+				'where d._Annot_key = a._Annot_key', None, execute = not DEBUG)
+
+		elif delByUser != "none":
+
+			delByUserKey = loadlib.verifyUser(delByUser, 0, errorFile)
+
+			if delByUserKey is None:
+				exit(1, 'Invalid User: %s\n' % (delByUser))
+		
+			db.sql('select e._Annot_key into #toDelete ' + \
+				'from VOC_Annot a, VOC_Evidence e ' + \
+				'where e._CreatedBy_key = %s ' % (delByUserKey) + \
+				'and e._Annot_key = a._Annot_key ' + \
+				'and a._AnnotType_key = %s\n' % (annotTypeKey), None, execute = not DEBUG)
+
+			db.sql('create index idx1 on #toDelete(_Annot_key)', None)
+
+			db.sql('delete VOC_Evidence from #toDelete d, VOC_Evidence e ' + \
+				'where d._Annot_key = e._Annot_key', None, execute = not DEBUG)
+
+			db.sql('delete VOC_Annot from #toDelete d, VOC_Annot a ' + \
+				'where d._Annot_key = a._Annot_key', None, execute = not DEBUG)
+
 		else:
 			db.sql('delete VOC_Annot from VOC_Annot ' + \
 				'where _AnnotType_key = %s\n' % (annotTypeKey), None, execute = not DEBUG)
@@ -582,14 +548,11 @@ def loadDictionaries():
 	    value = r['_Annot_key']
 	    annotDict[key] = value
 
-	# cache evidence keys for this type of annotation, given reference
+	# cache evidence keys for this type of annotation
 
 	cmd = 'select e._Annot_key, e._EvidenceTerm_key, e._Refs_key from VOC_Evidence e, VOC_Annot a ' + \
 	      'where a._AnnotType_key = %s ' % (annotTypeKey) + \
 	      'and a._Annot_key = e._Annot_key '
-
-	if delReferenceKey != 0:
-	    cmd = cmd + 'and _Refs_key = %s ' % (delReferenceKey)
 
 	results = db.sql(cmd, 'auto')
 	for r in results:
@@ -767,7 +730,7 @@ def processFile():
 		objectKey = verifyObject(objectID, logicalDBKey, lineNum)
 		referenceKey = loadlib.verifyReference(jnum, lineNum, errorFile)
 		evidenceKey = vocabloadlib.verifyEvidence(evidence, annotTypeKey, lineNum, errorFile)
-		qualifierKey = vocabloadlib.verifyQualifier(qualifier, annotTypeKey, lineNum, errorFile)
+		qualifierKey = vocabloadlib.verifyQualifier(qualifier, annotTypeKey, 0, lineNum, errorFile)
 		editorKey = loadlib.verifyUser(editor, lineNum, errorFile)
 
 		if termKey == 0 or objectKey == 0 or \
@@ -846,8 +809,6 @@ def bcpFiles():
 	os.system(bcpEvidence)
 	os.system(bcpNote)
 	os.system(bcpNoteChunk)
-
-#	db.sql('dump transaction %s with truncate_only' % (db.get_sqlDatabase()), None)
 
 #
 # Main

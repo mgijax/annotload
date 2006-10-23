@@ -4,12 +4,14 @@
 # An example of a task-specific configuration file
 #
 
-cd `dirname $0` && source ./Configuration
+source ${ANNOTLOAD}/Configuration
 
 setenv ANNOTDATADIR		/data/loads/swissprot/swissload/data
 setenv ANNOTMODE		preview
 setenv ANNOTTYPENAME		"InterPro/Marker"
-setenv ANNOTFILE		${ANNOTDATADIR}/interprosp.txt
-setenv ANNOTLOG			${ANNOTFILE}.log
+setenv ANNOTINPUTFILE		${ANNOTDATADIR}/interprosp.txt
+setenv ANNOTLOG			${ANNOTINPUTFILE}.log
 setenv DELETEREFERENCE		"J:0"
+setenv DELETEUSER		none
+setenv ANNOTOBSOLETE		0
 
