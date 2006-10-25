@@ -1,8 +1,36 @@
+TAG: annotload-3-5-1-2
+DATE: 10/25/2006
+STAFF: lec
+CHANGES:
+a) added delete mode
+
 TAG: annotload-3-5-1-1
 DATE: 10/23/2006
 STAFF: lec
 CHANGES:
 a) merged TR7894 branch
+
+TAG: annotload-tr7894-6
+DATE: 10/17/2006
+STAFF: lec
+CHANGES:
+a) TR7894; mgiconfig
+b) install lib_py_dataload-3-5-1-1 w/ this tag
+
+TAG: annotload-tr7894-5
+TAG: annotload-tr7894-4
+TAG: annotload-tr7894-3
+DATE: 09/29/2006
+STAFF: lec
+CHANGES:
+a) TR7894; mgiconfig
+
+TAG: annotload-tr7894-2
+TAG: annotload-tr7894-1
+DATE: 09/12/2006
+STAFF: lec
+CHANGES:
+a) TR7894; mgiconfig
 
 TAG: annotload-tr7894-6
 DATE: 10/17/2006

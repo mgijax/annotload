@@ -46,6 +46,8 @@
 #		          make any changes to the database.  used for testing or to preview
 #			  the load.
 #
+#		delete - delete the Annotations for the given Reference or User, and Annotation Type.
+#
 # Output:
 #
 #	1.  BCP files for VOC_Annot and VOC_Evidence
@@ -336,7 +338,7 @@ def verifyMode():
 
 	global DEBUG, delByReferenceKey, delByUserKey
 
-	if mode == 'new':
+	if mode == 'new' or mode == 'delete':
 
 		# verify deletion reference
 
@@ -393,6 +395,9 @@ def verifyMode():
 		DEBUG = 1
 	else:
 		exit(1, 'Invalid Processing Mode:  %s\n' % (mode))
+
+	if mode == 'delete':
+		exit(0)
 
 def verifyTerm(termID, lineNum):
 	'''
