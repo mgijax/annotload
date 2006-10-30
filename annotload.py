@@ -167,7 +167,6 @@ noteFileName = ''	# file name
 noteChunkFileName=  ''	# file name
 
 delByReferenceKey = 0	# deletion reference key
-delByUserKey = 0	# deletion user key
 annotTypeKey = 0	# VOC_AnnotType._AnnotType_key
 annotKey = 0		# VOC_Annot._Annot_key
 evidencePrimaryKey = 0	# VOC_Evidence._AnnotEvidence_key
@@ -336,7 +335,7 @@ def verifyMode():
 	#
 	'''
 
-	global DEBUG, delByReferenceKey, delByUserKey
+	global DEBUG, delByReferenceKey
 
 	if mode == 'new' or mode == 'delete':
 
@@ -365,14 +364,10 @@ def verifyMode():
 
 		elif delByUser != "none":
 
-			delByUserKey = loadlib.verifyUser(delByUser, 0, errorFile)
-
-			if delByUserKey is None:
-				exit(1, 'Invalid User: %s\n' % (delByUser))
-		
 			db.sql('select e._Annot_key into #toDelete ' + \
-				'from VOC_Annot a, VOC_Evidence e ' + \
-				'where e._CreatedBy_key = %s ' % (delByUserKey) + \
+				'from VOC_Annot a, VOC_Evidence e, MGI_User u ' + \
+				'where e._CreatedBy_key = u._User_key ' + \
+				'and u.login like "%s%" ' % (delByUser) + \
 				'and e._Annot_key = a._Annot_key ' + \
 				'and a._AnnotType_key = %s\n' % (annotTypeKey), None, execute = not DEBUG)
 
