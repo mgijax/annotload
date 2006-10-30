@@ -146,7 +146,7 @@ mode = os.environ['ANNOTMODE']
 inputFileName = os.environ['ANNOTINPUTFILE']
 annotTypeName = os.environ['ANNOTTYPENAME']
 delByReference = os.environ['DELETEREFERENCE']
-delByUser = os.environ['DELETEUSER']
+delByUser = os.environ['DELETEUSER'] + '%'
 loadObsolete = os.environ['ANNOTOBSOLETE']
 
 DEBUG = 0		# set DEBUG to false unless preview mode is selected
@@ -367,7 +367,7 @@ def verifyMode():
 			db.sql('select e._Annot_key into #toDelete ' + \
 				'from VOC_Annot a, VOC_Evidence e, MGI_User u ' + \
 				'where e._CreatedBy_key = u._User_key ' + \
-				'and u.login like "%s%" ' % (delByUser) + \
+				'and u.login like "%s" ' % (delByUser) + \
 				'and e._Annot_key = a._Annot_key ' + \
 				'and a._AnnotType_key = %s\n' % (annotTypeKey), None, execute = not DEBUG)
 
