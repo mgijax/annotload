@@ -418,7 +418,7 @@ def verifyTerm(termID, lineNum):
 	if termDict.has_key(termID):
 		termKey = termDict[termID]
 	else:
-		if not loadObsolete:
+		if loadObsolete == '0':
 			errorFile.write('Invalid or Obsolete Term (%d) %s\n' % (lineNum, termID))
 		else:
 			errorFile.write('Invalid Term (%d) %s\n' % (lineNum, termID))
@@ -530,7 +530,7 @@ def loadDictionaries():
 
 	# if loadObsolete is false, then only load non-obsoleted terms...
 
-	if not loadObsolete:
+	if loadObsolete == '0':
 		# only load non-obsoleted terms
 		cmd = cmd + 'and tm.isObsolete = 0'
 
