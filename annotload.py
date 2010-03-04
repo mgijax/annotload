@@ -34,6 +34,10 @@
 #		field 9: Notes (max length 255)
 #		field 10: Logical DB Name of Object (field 2), being Annotated (default is MGI); optional
 #
+#	field 10 is not required and should ONLY be used if you need to specify
+#	a logoical DB key OTHER THAN "1" (MGI).
+#	For example, see "entrezgeneload/human/annotations.py".
+#
 # Parameters:
 #
 #	processing modes:
@@ -719,6 +723,9 @@ def processFile():
 			editor = string.strip(tokens[6])
 			entryDate = string.strip(tokens[7])
 			notes = string.strip(tokens[8])
+
+			# only needed in order to specify a logicalDBKey that is different
+			# than the default with is "1" (MGD)
 
 			if len(tokens) == 10:
 				logicalDBKey = accessionlib.get_LogicalDB_key(tokens[9])
