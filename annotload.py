@@ -108,6 +108,9 @@
 #
 # History:
 #
+# lec	03/17/2010
+#	- TR10109; exec VOC_deleteGOGAFRed
+#
 # lec	10/02/2006
 #	- add option to delete records by a specified User.  Deletion by a Reference is
 #         checked first.
@@ -352,37 +355,46 @@ def verifyMode():
 			if delByReferenceKey is None:
 				exit(1, 'Invalid Reference: %s\n' % (delByReference))
 		
-			db.sql('select e._Annot_key into #toDelete ' + \
-				'from VOC_Annot a, VOC_Evidence e ' + \
-				'where e._Refs_key = %s ' % (delByReferenceKey) + \
-				'and e._Annot_key = a._Annot_key ' + \
-				'and a._AnnotType_key = %s\n' % (annotTypeKey), None, execute = not DEBUG)
+			db.sql('''select e._Annot_key, e._AnnotEvidence_key into #toDelete
+				from VOC_Annot a, VOC_Evidence e
+				where e._Refs_key = %s
+				and e._Annot_key = a._Annot_key 
+				and a._AnnotType_key = %s\n
+				''' % (delByReferenceKey, annotTypeKey), None, execute = not DEBUG)
 
 			db.sql('create index idx1 on #toDelete(_Annot_key)', None)
+			db.sql('create index idx2 on #toDelete(_AnnotEvidence_key)', None)
 
-			db.sql('delete VOC_Evidence from #toDelete d, VOC_Evidence e ' + \
-				'where d._Annot_key = e._Annot_key', None, execute = not DEBUG)
+			db.sql('''delete VOC_Evidence from #toDelete d, VOC_Evidence e
+				  where d._AnnotEvidence_key = e._AnnotEvidence_key''', None, execute = not DEBUG)
 
-			db.sql('delete VOC_Annot from #toDelete d, VOC_Annot a ' + \
-				'where d._Annot_key = a._Annot_key', None, execute = not DEBUG)
+			db.sql('''delete VOC_Annot from #toDelete d, VOC_Annot a 
+				  where d._Annot_key = a._Annot_key
+				  and not exists (select 1 from VOC_Evidence e
+						  where d._Annot_key = e._Annot_key)
+				  ''', None, execute = not DEBUG)
 
 		elif delByUser != "none":
 
-			db.sql('select e._Annot_key into #toDelete ' + \
-				'from VOC_Annot a, VOC_Evidence e, MGI_User u ' + \
-				'where e._CreatedBy_key = u._User_key ' + \
-				'and u.login like "%s" ' % (delByUser) + \
-				'and e._Annot_key = a._Annot_key ' + \
-				'and a._AnnotType_key = %s\n' % (annotTypeKey), None, execute = not DEBUG)
+			db.sql('''select e._Annot_key, e._AnnotEvidence_key into #toDelete 
+				from VOC_Annot a, VOC_Evidence e, MGI_User u 
+				where e._CreatedBy_key = u._User_key 
+				and u.login like "%s"
+				and e._Annot_key = a._Annot_key
+				and a._AnnotType_key = %s\n
+				''' % (delByUser, annotTypeKey), None, execute = not DEBUG)
 
 			db.sql('create index idx1 on #toDelete(_Annot_key)', None)
+			db.sql('create index idx2 on #toDelete(_AnnotEvidence_key)', None)
 
 			db.sql('delete VOC_Evidence from #toDelete d, VOC_Evidence e ' + \
-				'where d._Annot_key = e._Annot_key', None, execute = not DEBUG)
+				'where d._AnnotEvidence_key = e._AnnotEvidence_key', None, execute = not DEBUG)
 
-			db.sql('delete VOC_Annot from #toDelete d, VOC_Annot a ' + \
-				'where d._Annot_key = a._Annot_key', None, execute = not DEBUG)
-
+			db.sql('''delete VOC_Annot from #toDelete d, VOC_Annot a 
+				  where d._Annot_key = a._Annot_key
+				  and not exists (select 1 from VOC_Evidence e
+						  where d._Annot_key = e._Annot_key)
+				  ''', None, execute = not DEBUG)
 		else:
 			db.sql('delete VOC_Annot from VOC_Annot ' + \
 				'where _AnnotType_key = %s\n' % (annotTypeKey), None, execute = not DEBUG)
@@ -816,6 +828,9 @@ def bcpFiles():
 	os.system(bcpEvidence)
 	os.system(bcpNote)
 	os.system(bcpNoteChunk)
+
+	# for GO/GAF annotations...
+	#db.sql('exec VOC_deleteGOGAFRed "%s"' % (delByUser), None)
 
 #
 # Main
