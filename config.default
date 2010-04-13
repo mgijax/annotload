@@ -4,14 +4,12 @@
 # An example of a task-specific configuration file
 #
 
-source ${ANNOTLOAD}/Configuration
-
-setenv ANNOTDATADIR		/data/loads/swissprot/swissload/data
-setenv ANNOTMODE		preview
-setenv ANNOTTYPENAME		"InterPro/Marker"
-setenv ANNOTINPUTFILE		${ANNOTDATADIR}/interprosp.txt
-setenv ANNOTLOG			${ANNOTINPUTFILE}.log
-setenv DELETEREFERENCE		"J:0"
-setenv DELETEUSER		none
+setenv ANNOTDATADIR		/data/uniprot/uniprotload/output
+setenv ANNOTMODE		new
+setenv ANNOTTYPENAME		"GO/Marker"
+setenv ANNOTINPUTFILE		/data/uniprot/uniprotload/output/go_ec_annot.txt
+setenv ANNOTLOG			/data/uniprot/uniprotload/logs/go_ec.log
+setenv DELETEREFERENCE		"J:72245"
+setenv DELETEUSER		"uniprotload"
 setenv ANNOTOBSOLETE		0
 
