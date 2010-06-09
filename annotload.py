@@ -832,7 +832,7 @@ def bcpFiles():
 	os.system(bcpNoteChunk)
 
 	# for GO/GAF annotations only...
-	if delByUser in ('GOA%', 'RGD', 'GOC'):
+	if delByUser in ('GOA%', 'RGD%', 'GOC%'):
 	    execSQL = 'exec VOC_deleteGOGAFRed "%s"' % (delByUser)
 	    print execSQL
 	    db.sql(execSQL, None)
