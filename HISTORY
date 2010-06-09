@@ -1,3 +1,8 @@
+TAG: annotload-4-3-4-1
+DATE: 06/09/2010
+STAFF: lec
+CHANGES: add call to VOC_deleteGOGAFRed
+
 TAG: annotload-tr6839-BP
 DATE: 04/29/2010
 STAFF: sc
