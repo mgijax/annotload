@@ -108,7 +108,7 @@
 #
 # History:
 #
-# lec	03/17/2010
+# lec	06/09/2010
 #	- TR10109; exec VOC_deleteGOGAFRed
 #
 # lec	10/02/2006
@@ -635,7 +635,7 @@ def createAnnotationRecord(objectKey, termKey, qualifierKey, entryDate):
 
 	return(useAnnotKey)
 
-def createEvidenceRecord(newAnnotKey, evidenceKey, referenceKey, inferredFrom, editorKey, notes, entryDate, lineNum):
+def createEvidenceRecord(newAnnotKey, evidenceKey, referenceKey, inferredFrom, editorKey, notes, entryDate, line, lineNum):
 	'''
 	# requires:
 	#	newAnnotKey - primary key of the Annotation object
@@ -645,6 +645,7 @@ def createEvidenceRecord(newAnnotKey, evidenceKey, referenceKey, inferredFrom, e
 	#	editorKey - primary key of the Editor
 	#	notes - notes
 	#	entryDate - creation and modification date of Annotation
+	#	line - full line from input file
 	#	lineNum - the line number of the record from the input file
 	#
 	# effects:
@@ -670,7 +671,7 @@ def createEvidenceRecord(newAnnotKey, evidenceKey, referenceKey, inferredFrom, e
 	# if so, it's a duplicate; let's report it
 
 	if evidenceDict.has_key(eKey):
-		errorFile.write('Duplicate Evidence Statement (in input file): %d\n' % (lineNum))
+		errorFile.write('Duplicate line (in input file) %d: %s\n' % (lineNum, line))
 		return
 
 	# not a duplicate
@@ -781,6 +782,7 @@ def processFile():
 			editorKey, \
 			notes, \
 			entryDate, \
+			line, \
 			lineNum)
 
 #	end of "for line in inputFile.readlines():"
@@ -829,8 +831,11 @@ def bcpFiles():
 	os.system(bcpNote)
 	os.system(bcpNoteChunk)
 
-	# for GO/GAF annotations...
-	#db.sql('exec VOC_deleteGOGAFRed "%s"' % (delByUser), None)
+	# for GO/GAF annotations only...
+	if delByUser in ('GOA%', 'RGD', 'GOC'):
+	    execSQL = 'exec VOC_deleteGOGAFRed "%s"' % (delByUser)
+	    print execSQL
+	    db.sql(execSQL, None)
 
 #
 # Main
