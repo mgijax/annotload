@@ -1,3 +1,10 @@
+TAG: annotload-tr6839-1
+DATE: 07/05/2010
+STAFF: sc
+CHANGES:
+1) annotload.csh - check that ANNOTINPUTFILE exists
+2) annotload.py - if columns > 10 get col 10 aka ldb
+
 TAG: annotload-tr6839-BP
 DATE: 04/29/2010
 STAFF: sc

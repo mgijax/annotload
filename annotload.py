@@ -739,8 +739,13 @@ def processFile():
 			# only needed in order to specify a logicalDBKey that is different
 			# than the default with is "1" (MGD)
 
-			if len(tokens) == 10:
+			#if len(tokens) == 10:
+			#	logicalDBKey = accessionlib.get_LogicalDB_key(tokens[9])
+			if len(tokens) > 9:
+                            col10=accessionlib.get_LogicalDB_key(tokens[9])
+                            if col10 != None:
 				logicalDBKey = accessionlib.get_LogicalDB_key(tokens[9])
+
 
 		except:
 			exit(1, 'Invalid Line (%d): %s\n' % (lineNum, line))
