@@ -16,6 +16,8 @@
 #
 #	That no one else is adding Annotations to the database.
 #
+#	Usage: annotload.py [mcv]
+#	if this is the mcv annotation load pass the string 'mcv'
 # Side Effects:
 #
 #	None
@@ -192,6 +194,9 @@ evidenceDict = {}	# dictionary of evidence records for quick lookup
 
 loaddate = loadlib.loaddate
 
+# true (1) if this is the mcvload
+isMCV = 0
+
 def exit(status, message = None):
 	'''
 	# requires: status, the numeric exit status (integer)
@@ -215,7 +220,7 @@ def exit(status, message = None):
 	except:
 		pass
 
-	db.useOneConnection()
+	db.useOneConnection(0)
 	sys.exit(status)
  
 def init():
@@ -236,7 +241,8 @@ def init():
 	global annotFile, annotFileName, evidenceFile, evidenceFileName
 	global noteFile, noteFileName, noteChunkFile, noteChunkFileName
 	global annotTypeKey, annotKey, annotTypeName, evidencePrimaryKey, noteKey
- 
+ 	global isMCV
+
 	db.useOneConnection(1)
         db.set_sqlUser(user)
         db.set_sqlPasswordFromFile(passwordFileName)
@@ -250,6 +256,11 @@ def init():
 	noteFileName = tail + '.MGI_Note.bcp'
 	noteChunkFileName = tail + '.MGI_NoteChunk.bcp'
 
+        if len(sys.argv) == 2:
+	    if sys.argv[1] == 'mcv':
+		isMCV = 1
+		#print 'LOAD TYPE: %s' % sys.argv[1]
+	    
 	try:
 		inputFile = open(inputFileName, 'r')
 	except:
@@ -698,6 +709,130 @@ def createEvidenceRecord(newAnnotKey, evidenceKey, referenceKey, inferredFrom, e
 
 	evidencePrimaryKey = evidencePrimaryKey + 1
 
+def processMcvFile():
+        '''
+        # requires:
+        #
+        # effects:
+        #       Reads Marker Category input file
+	#       Verifies and Processes each line in the input file
+	# 	Deletes all annotations to all markers in the input file
+	#	Creates new annotations  in the input file, unless a delete is
+	#	indicated (all columns blank except mgi ID
+        #
+        # returns:
+        #       nothing
+        #
+        '''
+	global logicalDBKey, annotDict, evidenceDict
+
+	# running list of MGI IDs in the input so we don't delete more than once
+	mkrKeyList = []
+
+	#  we first delete all annotations by marker, then recreate based on the input
+	deleteSQL = 'delete from VOC_Annot where _AnnotType_key = 1011 and _Object_key = %s'
+        lineNum = 0
+
+        # For each line in the input file
+        for line in inputFile.readlines():
+                lineNum = lineNum + 1
+
+                # Split the line into tokens
+                tokens = string.splitfields(line[:-1], '\t')
+
+                try:
+                        termID = tokens[0]
+                        mgiID = tokens[1]
+                        jnum = tokens[2]
+                        evidence = tokens[3]
+                        inferredFrom = string.strip(tokens[4])
+                        qualifier = string.strip(tokens[5])
+                        editor = string.strip(tokens[6])
+                        entryDate = string.strip(tokens[7])
+                        notes = string.strip(tokens[8])
+
+                        if len(tokens) > 9:
+                            col10=accessionlib.get_LogicalDB_key(tokens[9])
+                            if col10 != None:
+                                logicalDBKey = accessionlib.get_LogicalDB_key(tokens[9])
+
+
+                except:
+                        exit(1, 'Invalid Line (%d): %s\n' % (lineNum, line))
+		# if we just have an MGI ID delete all annotations and continue
+		#print 'termID %s jnum %s evidence %s qualifier %s editor %s' % (termID, jnum, evidence, qualifier, editor)
+		if termID == '' and jnum == '' and evidence == '' and \
+		    qualifier == '' and editor == '':
+		    markerKey = verifyObject(mgiID, logicalDBKey, lineNum)
+		    if markerKey == 0: # not valid
+			# skip this record, verifyObject logs to discrepancy file
+			print 'skipping record, invalid MGI ID for delete only mode'
+			continue
+		    else:
+			# delete existing annotations for this marker/annotation type
+			# and go on to next record
+			print 'delete only mode, deleting all annotations for %s' % markerKey
+			#print deleteSQL % markerKey
+			db.sql(deleteSQL % markerKey, None)
+			continue
+
+		# if we get here, continue verifying
+                termKey = verifyTerm(termID, lineNum)
+                markerKey = verifyObject(mgiID, logicalDBKey, lineNum)
+                referenceKey = loadlib.verifyReference(jnum, lineNum, errorFile)
+                evidenceKey = vocabloadlib.verifyEvidence(evidence, annotTypeKey, lineNum, errorFile)
+                qualifierKey = vocabloadlib.verifyQualifier(qualifier, annotTypeKey, 0, lineNum, errorFile)
+                editorKey = loadlib.verifyUser(editor, lineNum, errorFile)
+		
+		# if any verification failed, this is an error
+                if termKey == 0 or markerKey == 0 or \
+                        referenceKey == 0 or \
+                        evidenceKey == 0 or \
+                        qualifierKey == 0 or \
+                        editorKey == 0:
+
+                        continue
+
+                # If the entry date is not given, use the current date
+                if len(entryDate) == 0:
+                        entryDate = loaddate
+
+                # if we get here, there are no errors so process the annotation
+
+		# first delete if we haven't already seen this marker in the input
+		if not markerKey in mkrKeyList:
+		    #print 'deleting annotations for marker %s key %s' % (mgiID, markerKey)
+		    db.sql(deleteSQL % markerKey, None)
+		    mkrKeyList.append(markerKey)
+		# then create annotations
+		#print 'creating annotation for %s %s %s %s' % (markerKey, termKey, qualifierKey, entryDate)
+		# first delete from annotDict, because we've deleted from the database
+		aKey = '%s:%s:%s:%s' % (annotTypeKey, markerKey, termKey, qualifierKey)
+		if annotDict.has_key(aKey):
+		    #print 'deleting annotation from dict'
+		    del annotDict[aKey]
+		# now create an annotation record
+                newAnnotKey = createAnnotationRecord(markerKey, termKey, qualifierKey, entryDate)
+		
+		## NOTE TO SHARON, I don't think we need to delete from evidenceDict
+		## because we'll always have a new annotation key
+		# first delete fom evidenceDict because we've deleted from the database
+		eKey = '%s:%s:%s' % (newAnnotKey, evidenceKey, referenceKey)
+		if evidenceDict.has_key(eKey):
+		    #print 'deleting evidence from dict'
+		    del evidenceDict[eKey]
+		# now create evidence record
+		#print 'creating evidence'
+                createEvidenceRecord(newAnnotKey, \
+                        evidenceKey, \
+                        referenceKey, \
+                        inferredFrom, \
+                        editorKey, \
+                        notes, \
+                        entryDate, \
+                        lineNum)
+
+
 def processFile():
 	'''
 	# requires:
@@ -846,7 +981,12 @@ verifyAnnotType()
 verifyMode()
 setPrimaryKeys()
 loadDictionaries()
-processFile()
+if isMCV == 1:
+    print 'Processing mcv'
+    processMcvFile()
+else:
+    print 'Processing non-mcv'
+    processFile()
 bcpFiles()
 exit(0)
 

@@ -8,9 +8,11 @@
 #
 
 setenv CONFIGFILE $1
+setenv LOADTYPE $2
 
 source ${CONFIGFILE}
 
+echo 'running annotload.csh'
 rm -rf ${ANNOTLOG}
 touch ${ANNOTLOG}
 
@@ -20,5 +22,5 @@ if ( ! -r ${ANNOTINPUTFILE} ) then
 endif
 
 date >> ${ANNOTLOG}
-${ANNOTLOAD}/annotload.py | tee -a ${ANNOTLOG}
+${ANNOTLOAD}/annotload.py ${LOADTYPE} | tee -a ${ANNOTLOG}
 date >> ${ANNOTLOG}

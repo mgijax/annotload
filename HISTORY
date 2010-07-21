@@ -1,3 +1,12 @@
+TAG: annotload-tr6839-2
+DATE: 07/21/2010
+STAFF: sc
+CHANGES:
+1) annotload.csh - takes optional 'mcv' 
+   parameter
+2) annotload.py - added processMcvFile() added
+   optional 'mcv' parameter
+
 TAG: annotload-tr6839-1
 DATE: 07/05/2010
 STAFF: sc
