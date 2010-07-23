@@ -3,6 +3,9 @@
 #
 # Annotation Load Wrapper
 #
+# Assumes: caller of this wrapper has sourced the
+# master config file
+#
 # Usage:
 # 	annotload.csh config file
 #

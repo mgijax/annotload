@@ -188,7 +188,7 @@ mgiNoteSeqNum = 1	# MGI_NoteChunk.sequenceNum
 termDict = {}		# dictionary of terms for quick lookup
 objectDict = {}		# dictionary of objects for quick lookup
 referenceDict = {}	# dictionary of references for quick lookup
-ecodesDict = {}		# dictionary of evidence codes for quick lookup
+#ecodesDict = {}		# dictionary of evidence codes for quick lookup
 annotDict = {}		# dictionary of annotation records for quick lookup
 evidenceDict = {}	# dictionary of evidence records for quick lookup
 
@@ -541,13 +541,13 @@ def loadDictionaries():
 
 	global ecodesDict, termDict, annotDict, evidenceDict, objectDict
 
-	results = db.sql('select e._Term_key, e.abbreviation ' + \
-			'from VOC_Term e, VOC_AnnotType t ' + \
-			'where e._Vocab_key = t._EvidenceVocab_key ' + \
-			'and t._AnnotType_key = %s\n' % (annotTypeKey), 'auto')
+	#results = db.sql('select e._Term_key, e.abbreviation ' + \
+	#		'from VOC_Term e, VOC_AnnotType t ' + \
+	#		'where e._Vocab_key = t._EvidenceVocab_key ' + \
+	#		'and t._AnnotType_key = %s\n' % (annotTypeKey), 'auto')
 
-	for r in results:
-		ecodesDict[r['abbreviation']] = r['_Term_key']
+	#for r in results:
+	#	ecodesDict[r['abbreviation']] = r['_Term_key']
 
 	cmd = 'select t._Object_key, t.accID ' + \
 		'from VOC_Term_Acc_View t, VOC_Term tm, VOC_AnnotType a ' + \
@@ -624,8 +624,8 @@ def createAnnotationRecord(objectKey, termKey, qualifierKey, entryDate):
 
 	global annotKey, annotDict
 
-	# if an annotation already exists for the same Object/Term/Not, 
-	# use the same annotation key
+	# if an annotation already exists for the same 
+	# AnnotType/Object/Term/Qualifier, use the same annotation key
 
 	aKey = '%s:%s:%s:%s' % (annotTypeKey, objectKey, termKey, qualifierKey)
 
@@ -817,10 +817,10 @@ def processMcvFile():
 		## NOTE TO SHARON, I don't think we need to delete from evidenceDict
 		## because we'll always have a new annotation key
 		# first delete fom evidenceDict because we've deleted from the database
-		eKey = '%s:%s:%s' % (newAnnotKey, evidenceKey, referenceKey)
-		if evidenceDict.has_key(eKey):
+		#eKey = '%s:%s:%s' % (newAnnotKey, evidenceKey, referenceKey)
+		#if evidenceDict.has_key(eKey):
 		    #print 'deleting evidence from dict'
-		    del evidenceDict[eKey]
+		#    del evidenceDict[eKey]
 		# now create evidence record
 		#print 'creating evidence'
                 createEvidenceRecord(newAnnotKey, \
@@ -872,7 +872,7 @@ def processFile():
 			notes = string.strip(tokens[8])
 
 			# only needed in order to specify a logicalDBKey that is different
-			# than the default with is "1" (MGD)
+			# than the default with is "1" (MGI)
 
 			#if len(tokens) == 10:
 			#	logicalDBKey = accessionlib.get_LogicalDB_key(tokens[9])
