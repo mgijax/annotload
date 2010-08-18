@@ -4,12 +4,27 @@
 # An example of a task-specific configuration file
 #
 
+# All outputs go here, diag and error logs, bcp files, etc
 setenv ANNOTDATADIR		/data/uniprot/uniprotload/output
+
+# new, append, preview
 setenv ANNOTMODE		new
+
+# VOC_AnnotType.name
 setenv ANNOTTYPENAME		"GO/Marker"
+
+# full path to the annotation input file
 setenv ANNOTINPUTFILE		/data/uniprot/uniprotload/output/go_ec_annot.txt
+
+# full path to the specific load log, all stdout goes here
 setenv ANNOTLOG			/data/uniprot/uniprotload/logs/go_ec.log
+
+# if delete by reference, specify here, else specify 'J:0'
 setenv DELETEREFERENCE		"J:72245"
+
+# if delete by user specify here
 setenv DELETEUSER		"uniprotload"
+
+# if 1 load annotations to obsolete terms 
 setenv ANNOTOBSOLETE		0
 
