@@ -77,7 +77,6 @@ CHANGES:
 1) annotload.csh - check that ANNOTINPUTFILE exists
 2) annotload.py - if columns > 10 get col 10 aka ldb
 
->>>>>>> 1.40.2.3
 TAG: annotload-tr6839-BP
 DATE: 04/29/2010
 STAFF: sc

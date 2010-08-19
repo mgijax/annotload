@@ -831,6 +831,7 @@ def processMcvFile():
                         editorKey, \
                         notes, \
                         entryDate, \
+			line, \
                         lineNum)
 
 
