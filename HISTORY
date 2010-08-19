@@ -1,3 +1,9 @@
+TAG: annotload-4-4-0-2
+DATE: 08/18/2010
+STAFF: sc
+CHANGES: merge issue, new call to createEvidenceRecord
+and that method had changed its signature after branch created
+
 TAG: annotload-4-4-0-1
 DATE: 08/18/2010
 STAFF: sc
@@ -8,6 +14,37 @@ TAG: annotload-4-3-4-1
 DATE: 06/09/2010
 STAFF: lec
 CHANGES: add call to VOC_deleteGOGAFRed
+
+TAG: annotload-tr6839-4
+DATE: 07/23/2010
+STAFF: sc
+CHANGES:
+1) annotload.py - removed unused ecodes dictionary
+2) updated some commenting
+
+TAG: annotload-tr6839-3
+DATE: 07/22/2010
+STAFF: sc
+CHANGES:
+1) config.default - added explanation of variables to this
+  example config
+2)
+ 
+TAG: annotload-tr6839-2
+DATE: 07/21/2010
+STAFF: sc
+CHANGES:
+1) annotload.csh - takes optional 'mcv' 
+   parameter
+2) annotload.py - added processMcvFile() added
+   optional 'mcv' parameter
+
+TAG: annotload-tr6839-1
+DATE: 07/05/2010
+STAFF: sc
+CHANGES:
+1) annotload.csh - check that ANNOTINPUTFILE exists
+2) annotload.py - if columns > 10 get col 10 aka ldb
 
 TAG: annotload-tr6839-4
 DATE: 07/23/2010
