@@ -110,12 +110,18 @@
 #
 # History:
 #
+# sc  08/18/2010
+#	- TR6839; added processMcvFile() and optional 'mcv' parameter
+#	- additional commenting and ability to have > 10 columns but ignore them 
+#	  i.e. if > 10 then get column 10 which is ldb
+#	- removed unused 'ecodes' dictionary
+#
 # lec	06/09/2010
 #	- TR10109; exec VOC_deleteGOGAFRed
 #
 # lec	10/02/2006
-#	- add option to delete records by a specified User.  Deletion by a Reference is
-#         checked first.
+#	- add option to delete records by a specified User.  Deletion by a Reference
+#	 is checked first.
 #
 # lec	10/04/2005
 #	- TR 5188; replace isNot with _Qualifier_key in VOC_Annot.
@@ -719,7 +725,7 @@ def processMcvFile():
 	#       Verifies and Processes each line in the input file
 	# 	Deletes all annotations to all markers in the input file
 	#	Creates new annotations  in the input file, unless a delete is
-	#	indicated (all columns blank except mgi ID
+	#	indicated (all columns blank except mgi ID)
         #
         # returns:
         #       nothing
