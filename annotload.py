@@ -110,11 +110,17 @@
 #
 # History:
 #
+# lec	10/12/2010
+#	- TR10393/added 'UniProtKB'
+#
 # sc  08/18/2010
 #	- TR6839; added processMcvFile() and optional 'mcv' parameter
 #	- additional commenting and ability to have > 10 columns but ignore them 
 #	  i.e. if > 10 then get column 10 which is ldb
 #	- removed unused 'ecodes' dictionary
+#
+# lec	07/21/2010
+#	- TR9962/added 'RefGenome' to VOC_deleteGOGAFRed
 #
 # lec	06/09/2010
 #	- TR10109; exec VOC_deleteGOGAFRed
@@ -979,7 +985,7 @@ def bcpFiles():
 	os.system(bcpNoteChunk)
 
 	# for GO/GAF annotations only...
-	if delByUser in ('GOA%', 'RGD%', 'GOC%'):
+	if delByUser in ('GOA%', 'RGD', 'GOC', 'RefGenome', 'UniProtKB'):
 	    execSQL = 'exec VOC_deleteGOGAFRed "%s"' % (delByUser)
 	    print execSQL
 	    db.sql(execSQL, None)
