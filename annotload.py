@@ -5,7 +5,11 @@
 # Purpose:
 #
 #	To load Annotations for the specified Vocabulary and MGI Object
-#	into the VOC Annotation structures:  VOC_Annot, VOC_Evidence
+#	into the VOC Annotation structures:  
+#
+#	VOC_Annot
+#	VOC_Evidence
+#	VOC_Evidence_Property (TR10044)
 #
 #	See TR 2867.
 #  
@@ -16,11 +20,9 @@
 #
 #	That no one else is adding Annotations to the database.
 #
-#	Usage: annotload.py [mcv]
+#	Usage: annotload.py [mcv|go]
 #	if this is the mcv annotation load pass the string 'mcv'
-# Side Effects:
-#
-#	None
+#	if this is a go annotation load pass the string 'go'
 #
 # Input:
 #
@@ -35,6 +37,21 @@
 #		field 8: Date (MM/DD/YYYY)
 #		field 9: Notes (max length 255)
 #		field 10: Logical DB Name of Object (field 2), being Annotated (default is MGI); optional
+#		field 11: Properties
+#			&=& : separates property from its value:
+#				prop1&=&value1
+#			&==& : separates one property/value pair from another
+#				prop1&=&value1&==&prop2&=&value2
+#			&===& : separates a stanza; a stanza contain >= 1 property/value pairs 
+#				prop1&=&value1&==&prop2&=&value2&===&prop1&=&value1&==&prop2&=&value2
+#
+#			example of one stanza, one property/value pair:
+#				gene product&=&UniProtKB:P12023
+#			example of one stanza, two property/value pair:
+#				gene product&=&UniProtKB:P12023&==&external ref&=&PMID:2834384|EXP
+#			example of two stanza, two property/value pair:
+#				gene product&=&UniProtKB:P12023&==&external ref&=&PMID:2834384|EXP (continue below)
+#				&===&gene product&=&UniProtKB:P12023&==&external ref&=&PMID:2834384|EXP
 #
 #	field 10 is not required and should ONLY be used if you need to specify
 #	a logoical DB key OTHER THAN "1" (MGI).
@@ -56,7 +73,7 @@
 #
 # Output:
 #
-#	1.  BCP files for VOC_Annot and VOC_Evidence
+#	1.  BCP files for VOC_Annot, VOC_Evidence, VOC_Evidence_Property
 #	2.  Diagnostics file of all input parameters and SQL commands
 #	3.  Error file
 #
@@ -110,6 +127,9 @@
 #
 # History:
 #
+# lec	11/04/2010
+#	- TR10044/GO Notes; VOC_Evidence_Property
+@
 # lec	10/12/2010
 #	- TR10393/added 'UniProtKB'
 #
@@ -166,9 +186,11 @@ passwordFileName = os.environ['MGD_DBPASSWORDFILE']
 mode = os.environ['ANNOTMODE']
 inputFileName = os.environ['ANNOTINPUTFILE']
 annotTypeName = os.environ['ANNOTTYPENAME']
+annotProperty = os.environ['ANNOTPROPERTY']
 delByReference = os.environ['DELETEREFERENCE']
 delByUser = os.environ['DELETEUSER'] + '%'
 loadObsolete = os.environ['ANNOTOBSOLETE']
+loadType = ''		# the load type of this annotload run
 
 DEBUG = 0		# set DEBUG to false unless preview mode is selected
 
@@ -177,6 +199,7 @@ diagFile = ''		# file descriptor
 errorFile = ''		# file descriptor
 annotFile = ''		# file descriptor
 evidenceFile = ''	# file descriptor
+propertyFile = ''	# file descriptor
 noteFile = ''		# file descriptor
 noteChunkFile = ''	# file descriptor
 
@@ -184,6 +207,7 @@ diagFileName = ''	# file name
 errorFileName = ''	# file name
 annotFileName = ''	# file name
 evidenceFileName = ''	# file name
+propertyFileName = ''	# file name
 noteFileName = ''	# file name
 noteChunkFileName=  ''	# file name
 
@@ -191,6 +215,7 @@ delByReferenceKey = 0	# deletion reference key
 annotTypeKey = 0	# VOC_AnnotType._AnnotType_key
 annotKey = 0		# VOC_Annot._Annot_key
 evidencePrimaryKey = 0	# VOC_Evidence._AnnotEvidence_key
+propertyKey = 0		# VOC_Evidence_Property._EvidenceProperty_key
 noteKey = 0		# MGI_Note._Note_key
 logicalDBKey = 1	# ACC_Accession._LogicalDB_key (default is "MGI", 1)
 mgiNoteObjectKey = 25	# MGI_Note._MGIType_key
@@ -200,14 +225,16 @@ mgiNoteSeqNum = 1	# MGI_NoteChunk.sequenceNum
 termDict = {}		# dictionary of terms for quick lookup
 objectDict = {}		# dictionary of objects for quick lookup
 referenceDict = {}	# dictionary of references for quick lookup
-#ecodesDict = {}		# dictionary of evidence codes for quick lookup
 annotDict = {}		# dictionary of annotation records for quick lookup
 evidenceDict = {}	# dictionary of evidence records for quick lookup
+pTermDict = {}		# dictionary of propery terms for quick lookup
 
 loaddate = loadlib.loaddate
 
 # true (1) if this is the mcvload
 isMCV = 0
+# true (1) if this is a GO load
+isGO = 0
 
 def exit(status, message = None):
 	'''
@@ -229,6 +256,7 @@ def exit(status, message = None):
 		errorFile.write('\n\nEnd Date/Time: %s\n' % (mgi_utils.date()))
 		diagFile.close()
 		errorFile.close()
+
 	except:
 		pass
 
@@ -251,9 +279,10 @@ def init():
  
 	global inputFile, diagFile, errorFile, errorFileName, diagFileName
 	global annotFile, annotFileName, evidenceFile, evidenceFileName
+	global propertyFile, propertyFileName
 	global noteFile, noteFileName, noteChunkFile, noteChunkFileName
-	global annotTypeKey, annotKey, annotTypeName, evidencePrimaryKey, noteKey
- 	global isMCV
+	global annotTypeKey, annotKey, annotTypeName, evidencePrimaryKey, noteKey, propertyKey
+ 	global isMCV, isGO
 
 	db.useOneConnection(1)
         db.set_sqlUser(user)
@@ -265,13 +294,19 @@ def init():
 	errorFileName = tail + '.' + fdate + '.error'
 	annotFileName = tail + '.VOC_Annot.bcp'
 	evidenceFileName = tail + '.VOC_Evidence.bcp'
+	propertyFileName = tail + '.VOC_Evidence_Property.bcp'
 	noteFileName = tail + '.MGI_Note.bcp'
 	noteChunkFileName = tail + '.MGI_NoteChunk.bcp'
 
+	# determine load-type
+
         if len(sys.argv) == 2:
-	    if sys.argv[1] == 'mcv':
+	    loadType = sys.argv[1]
+	    if loadType == 'mcv':
 		isMCV = 1
 		#print 'LOAD TYPE: %s' % sys.argv[1]
+	    if loadType == 'go':
+		isGO = 1
 	    
 	try:
 		inputFile = open(inputFileName, 'r')
@@ -299,6 +334,11 @@ def init():
 		exit(1, 'Could not open file %s\n' % evidenceFileName)
 		
 	try:
+		propertyFile = open(propertyFileName, 'w')
+	except:
+		exit(1, 'Could not open file %s\n' % propertyFileName)
+		
+	try:
 		noteFile = open(noteFileName, 'w')
 	except:
 		exit(1, 'Could not open file %s\n' % noteFileName)
@@ -321,6 +361,7 @@ def init():
 	diagFile.write('Annotation File: %s\n' % (inputFileName))
 	diagFile.write('Deletion Reference: %s\n\n' % (delByReference))
 	diagFile.write('Deletion User: %s\n\n' % (delByUser))
+	diagFile.write('Load Type: %s\n\n' % (loadType))
 
 	errorFile.write('Start Date/Time: %s\n\n' % (mgi_utils.date()))
 
@@ -388,6 +429,9 @@ def verifyMode():
 			db.sql('create index idx1 on #toDelete(_Annot_key)', None)
 			db.sql('create index idx2 on #toDelete(_AnnotEvidence_key)', None)
 
+			db.sql('''delete VOC_Evidence_Property from #toDelete d, VOC_Evidence_Property p
+				  where d._AnnotEvidence_key = p._AnnotEvidence_key''', None, execute = not DEBUG)
+
 			db.sql('''delete VOC_Evidence from #toDelete d, VOC_Evidence e
 				  where d._AnnotEvidence_key = e._AnnotEvidence_key''', None, execute = not DEBUG)
 
@@ -409,6 +453,9 @@ def verifyMode():
 
 			db.sql('create index idx1 on #toDelete(_Annot_key)', None)
 			db.sql('create index idx2 on #toDelete(_AnnotEvidence_key)', None)
+
+			db.sql('''delete VOC_Evidence_Property from #toDelete d, VOC_Evidence_Property p
+				  where d._AnnotEvidence_key = p._AnnotEvidence_key''', None, execute = not DEBUG)
 
 			db.sql('delete VOC_Evidence from #toDelete d, VOC_Evidence e ' + \
 				'where d._AnnotEvidence_key = e._AnnotEvidence_key', None, execute = not DEBUG)
@@ -519,7 +566,7 @@ def setPrimaryKeys():
 	#
 	'''
 
-	global annotKey, evidencePrimaryKey, noteKey
+	global annotKey, evidencePrimaryKey, noteKey, propertyKey
 
         results = db.sql('select maxKey = max(_Annot_key) + 1 from VOC_Annot', 'auto')
         if results[0]['maxKey'] is None:
@@ -539,33 +586,33 @@ def setPrimaryKeys():
         else:
                 noteKey = results[0]['maxKey']
 
+        results = db.sql('select maxKey = max(_EvidenceProperty_key) + 1 from VOC_Evidence_Property', 'auto')
+        if results[0]['maxKey'] is None:
+                propertyKey = 1000
+        else:
+                propertyKey = results[0]['maxKey']
+
 def loadDictionaries():
 	'''
 	# requires:
 	#
 	# effects:
-	#	loads global dictionaries: ecodesDict, termDict
-	#	for quicker lookup
+	#	loads global dictionaries (see global below) for quicker lookup
 	#
 	# returns:
 	#	nothing
 	'''
 
-	global ecodesDict, termDict, annotDict, evidenceDict, objectDict
+	global termDict, annotDict, evidenceDict, objectDict, pTermDict
 
-	#results = db.sql('select e._Term_key, e.abbreviation ' + \
-	#		'from VOC_Term e, VOC_AnnotType t ' + \
-	#		'where e._Vocab_key = t._EvidenceVocab_key ' + \
-	#		'and t._AnnotType_key = %s\n' % (annotTypeKey), 'auto')
+	# cache annotation type vocabulary
 
-	#for r in results:
-	#	ecodesDict[r['abbreviation']] = r['_Term_key']
-
-	cmd = 'select t._Object_key, t.accID ' + \
-		'from VOC_Term_Acc_View t, VOC_Term tm, VOC_AnnotType a ' + \
-		'where t._Object_key = tm._Term_key ' + \
-		'and tm._Vocab_key = a._Vocab_key ' + \
-		'and a._AnnotType_key = %s\n' % (annotTypeKey)
+	cmd = '''
+	      select t._Object_key, t.accID 
+	      from VOC_Term_Acc_View t, VOC_Term tm, VOC_AnnotType a
+	      where t._Object_key = tm._Term_key 
+	      and tm._Vocab_key = a._Vocab_key
+	      and a._AnnotType_key = %s\n''' % (annotTypeKey)
 
 	# if loadObsolete is false, then only load non-obsoleted terms...
 
@@ -578,10 +625,23 @@ def loadDictionaries():
 	for r in results:
 		termDict[r['accID']] = r['_Object_key']
 
+	# cache property vocabulary
+
+	cmd = '''
+	      select _Term_key, term
+	      from VOC_Term
+	      where _Vocab_key = %s\n''' % (annotProperty)
+
+	results = db.sql(cmd, 'auto')
+
+	for r in results:
+		pTermDict[r['term']] = r['_Term_key']
+
 	# cache annotation keys for this type of annotation
 
-	results = db.sql('select _Annot_key, _Object_key, _Term_key, _Qualifier_key from VOC_Annot ' + \
-		'where _AnnotType_key = %s ' % (annotTypeKey), 'auto')
+	results = db.sql('''select _Annot_key, _Object_key, _Term_key, _Qualifier_key 
+		 from VOC_Annot
+		 where _AnnotType_key = %s''' % (annotTypeKey), 'auto')
 	for r in results:
 	    key = '%s:%s:%s:%s' % (annotTypeKey, r['_Object_key'], r['_Term_key'], r['_Qualifier_key'])
 	    value = r['_Annot_key']
@@ -589,9 +649,10 @@ def loadDictionaries():
 
 	# cache evidence keys for this type of annotation
 
-	cmd = 'select e._Annot_key, e._EvidenceTerm_key, e._Refs_key from VOC_Evidence e, VOC_Annot a ' + \
-	      'where a._AnnotType_key = %s ' % (annotTypeKey) + \
-	      'and a._Annot_key = e._Annot_key '
+	cmd = '''select e._Annot_key, e._EvidenceTerm_key, e._Refs_key 
+	       from VOC_Evidence e, VOC_Annot a
+	       where a._AnnotType_key = %s
+	       and a._Annot_key = e._Annot_key''' % (annotTypeKey)
 
 	results = db.sql(cmd, 'auto')
 	for r in results:
@@ -601,12 +662,12 @@ def loadDictionaries():
 
         # cache object keys
 
-	results = db.sql('select a.accID, a._Object_key ' + \
-		'from ACC_Accession a, VOC_AnnotType t ' + \
-		'where a._LogicalDB_key = %s ' % (logicalDBKey) + \
-		'and a.preferred = 1 ' + \
-		'and a._MGIType_key = t._MGIType_key ' + \
-		'and t._AnnotType_key = %s\n' % (annotTypeKey), 'auto')
+	results = db.sql('''select a.accID, a._Object_key
+		from ACC_Accession a, VOC_AnnotType t
+		where a._LogicalDB_key = %s
+		and a.preferred = 1
+		and a._MGIType_key = t._MGIType_key
+		and t._AnnotType_key = %s\n''' % (logicalDBKey, annotTypeKey), 'auto')
         for r in results:
 	    key = r['accID']
 	    value = r['_Object_key']
@@ -658,7 +719,8 @@ def createAnnotationRecord(objectKey, termKey, qualifierKey, entryDate):
 
 	return(useAnnotKey)
 
-def createEvidenceRecord(newAnnotKey, evidenceKey, referenceKey, inferredFrom, editorKey, notes, entryDate, line, lineNum):
+def createEvidenceRecord(newAnnotKey, evidenceKey, referenceKey, \
+			inferredFrom, editorKey, notes, properties, entryDate, line, lineNum):
 	'''
 	# requires:
 	#	newAnnotKey - primary key of the Annotation object
@@ -667,6 +729,7 @@ def createEvidenceRecord(newAnnotKey, evidenceKey, referenceKey, inferredFrom, e
 	#	inferredFrom - inferred from value
 	#	editorKey - primary key of the Editor
 	#	notes - notes
+	#	properties - properties
 	#	entryDate - creation and modification date of Annotation
 	#	line - full line from input file
 	#	lineNum - the line number of the record from the input file
@@ -684,7 +747,7 @@ def createEvidenceRecord(newAnnotKey, evidenceKey, referenceKey, inferredFrom, e
 	#
 	'''
 
-	global evidencePrimaryKey, evidenceDict, noteKey
+	global evidencePrimaryKey, evidenceDict, noteKey, propertyKey
 
 	# make sure this is not a duplicate evidence statement
 
@@ -705,10 +768,15 @@ def createEvidenceRecord(newAnnotKey, evidenceKey, referenceKey, inferredFrom, e
 		% (evidencePrimaryKey, newAnnotKey, evidenceKey, referenceKey, inferredFrom, \
 		   editorKey, editorKey, entryDate, entryDate))
 
+	# storing data in MGI_Note/MGI_NoteChunk
+
 	mgiNoteSeqNum = 1
 	if len(notes) > 0:
+
 	    noteFile.write('%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
-		% (noteKey, evidencePrimaryKey, mgiNoteObjectKey, mgiNoteTypeKey, editorKey, editorKey, entryDate, entryDate))
+		% (noteKey, evidencePrimaryKey, mgiNoteObjectKey, mgiNoteTypeKey, \
+		   editorKey, editorKey, entryDate, entryDate))
+
 	    while len(notes) > 255:
 	        noteChunkFile.write('%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
 		    % (noteKey, mgiNoteSeqNum, notes[:255], editorKey, editorKey, entryDate, entryDate))
@@ -718,7 +786,43 @@ def createEvidenceRecord(newAnnotKey, evidenceKey, referenceKey, inferredFrom, e
 	    if len(notes) > 0:
 	        noteChunkFile.write('%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
 		    % (noteKey, mgiNoteSeqNum, notes, editorKey, editorKey, entryDate, entryDate))
+
 	    noteKey = noteKey + 1
+
+	#
+	# annotation/evidence/property
+	#
+	# see usage above
+	#
+	# for each property in the property field 11
+	#     extract each stanza
+	#       extract the property/value pairs
+	#         extract the term and the value
+	#           if the term exists in the pTermDict lookup then
+	#            create a row in the property table
+	#
+
+	if len(properties) > 0:
+
+	    stanza = 1
+	    allStanzas = string.split(properties, '&===&')
+
+	    for s in allStanzas:
+	        seqnum = 1
+		allProps = string.split(s, '&==&')
+
+		for p in allProps:
+		    pTerm, pValue = string.split(p,'&=&')
+		    if pTermDict.has_key(pTerm):
+	                propertyFile.write('%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
+		                % (propertyKey, evidencePrimaryKey, pTermDict[pTerm], stanza, seqnum, pValue, \
+		                   editorKey, editorKey, entryDate, entryDate))
+		        seqnum = seqnum + 1
+		        propertyKey = propertyKey + 1
+		    else:
+		        errorFile.write('Invalid Property:  %s\n' % (pTerm))
+
+		stanza = stanza + 1
 
 	evidencePrimaryKey = evidencePrimaryKey + 1
 
@@ -764,14 +868,19 @@ def processMcvFile():
                         entryDate = string.strip(tokens[7])
                         notes = string.strip(tokens[8])
 
+			properties = ''
+
                         if len(tokens) > 9:
-                            col10=accessionlib.get_LogicalDB_key(tokens[9])
+
+                            col10 = accessionlib.get_LogicalDB_key(tokens[9])
                             if col10 != None:
                                 logicalDBKey = accessionlib.get_LogicalDB_key(tokens[9])
 
+			    properties = string.strip(tokens[10])
 
                 except:
                         exit(1, 'Invalid Line (%d): %s\n' % (lineNum, line))
+
 		# if we just have an MGI ID delete all annotations and continue
 		#print 'termID %s jnum %s evidence %s qualifier %s editor %s' % (termID, jnum, evidence, qualifier, editor)
 		if termID == '' and jnum == '' and evidence == '' and \
@@ -842,10 +951,10 @@ def processMcvFile():
                         inferredFrom, \
                         editorKey, \
                         notes, \
+			properties, \
                         entryDate, \
 			line, \
                         lineNum)
-
 
 def processFile():
 	'''
@@ -885,16 +994,18 @@ def processFile():
 			entryDate = string.strip(tokens[7])
 			notes = string.strip(tokens[8])
 
-			# only needed in order to specify a logicalDBKey that is different
-			# than the default with is "1" (MGI)
+			properties = ''
 
-			#if len(tokens) == 10:
-			#	logicalDBKey = accessionlib.get_LogicalDB_key(tokens[9])
-			if len(tokens) > 9:
-                            col10=accessionlib.get_LogicalDB_key(tokens[9])
+                        if len(tokens) > 9:
+
+			    # only needed in order to specify a logicalDBKey that is different
+			    # than the default with is "1" (MGI)
+
+                            col10 = accessionlib.get_LogicalDB_key(tokens[9])
                             if col10 != None:
-				logicalDBKey = accessionlib.get_LogicalDB_key(tokens[9])
+                                logicalDBKey = accessionlib.get_LogicalDB_key(tokens[9])
 
+			    properties = string.strip(tokens[10])
 
 		except:
 			exit(1, 'Invalid Line (%d): %s\n' % (lineNum, line))
@@ -934,6 +1045,7 @@ def processFile():
 			inferredFrom, \
 			editorKey, \
 			notes, \
+			properties, \
 			entryDate, \
 			line, \
 			lineNum)
@@ -952,40 +1064,53 @@ def bcpFiles():
 	#
 	'''
 
+	annotFile.close()
+	evidenceFile.close()
+	noteFile.close()
+	noteChunkFile.close()
+	propertyFile.close()
+
 	if DEBUG:
 		return
 
-	annotFile.close()
 	bcpAnnot = 'cat %s | bcp %s..%s in %s -c -t\"\t" -e %s -S%s -U%s >> %s' \
 		% (passwordFileName, db.get_sqlDatabase(), \
-	   	'VOC_Annot', annotFileName, errorFileName, db.get_sqlServer(), db.get_sqlUser(), diagFileName)
+	   	'VOC_Annot', annotFileName, errorFileName, \
+		db.get_sqlServer(), db.get_sqlUser(), diagFileName)
 	diagFile.write('%s\n' % bcpAnnot)
 
-	evidenceFile.close()
 	bcpEvidence = 'cat %s | bcp %s..%s in %s -c -t\"\t" -e %s -S%s -U%s >> %s' \
 		% (passwordFileName, db.get_sqlDatabase(), \
-	   	'VOC_Evidence', evidenceFileName, errorFileName, db.get_sqlServer(), db.get_sqlUser(), diagFileName)
+	   	'VOC_Evidence', evidenceFileName, errorFileName, \
+		db.get_sqlServer(), db.get_sqlUser(), diagFileName)
 	diagFile.write('%s\n' % bcpEvidence)
 
-	noteFile.close()
 	bcpNote = 'cat %s | bcp %s..%s in %s -c -t\"\t" -e %s -S%s -U%s >> %s' \
 		% (passwordFileName, db.get_sqlDatabase(), \
-	   	'MGI_Note', noteFileName, errorFileName, db.get_sqlServer(), db.get_sqlUser(), diagFileName)
+	   	'MGI_Note', noteFileName, errorFileName, \
+		db.get_sqlServer(), db.get_sqlUser(), diagFileName)
 	diagFile.write('%s\n' % bcpNote)
 
-	noteChunkFile.close()
 	bcpNoteChunk = 'cat %s | bcp %s..%s in %s -c -t\"\t" -e %s -S%s -U%s >> %s' \
 		% (passwordFileName, db.get_sqlDatabase(), \
-	   	'MGI_NoteChunk', noteChunkFileName, errorFileName, db.get_sqlServer(), db.get_sqlUser(), diagFileName)
+	   	'MGI_NoteChunk', noteChunkFileName, errorFileName, \
+		db.get_sqlServer(), db.get_sqlUser(), diagFileName)
 	diagFile.write('%s\n' % bcpNoteChunk)
+
+	bcpProperty = 'cat %s | bcp %s..%s in %s -c -t\"\t" -e %s -S%s -U%s >> %s' \
+		% (passwordFileName, db.get_sqlDatabase(), \
+	   	'VOC_Evidence_Property', propertyFileName, errorFileName, \
+		db.get_sqlServer(), db.get_sqlUser(), diagFileName)
+	diagFile.write('%s\n' % bcpProperty)
 
 	os.system(bcpAnnot)
 	os.system(bcpEvidence)
 	os.system(bcpNote)
 	os.system(bcpNoteChunk)
+	os.system(bcpProperty)
 
 	# for GO/GAF annotations only...
-	if delByUser in ('GOA%', 'RGD%', 'GOC%', 'RefGenome%', 'UniProtKB%'):
+	if isGO:
 	    execSQL = 'exec VOC_deleteGOGAFRed "%s"' % (delByUser)
 	    print execSQL
 	    db.sql(execSQL, None)
@@ -999,12 +1124,14 @@ verifyAnnotType()
 verifyMode()
 setPrimaryKeys()
 loadDictionaries()
-if isMCV == 1:
-    print 'Processing mcv'
+
+if isMCV:
+    print 'Processing mcv load'
     processMcvFile()
 else:
-    print 'Processing non-mcv'
+    print 'Processing regular (non-mcv) load'
     processFile()
-bcpFiles()
+
+#bcpFiles()
 exit(0)
 

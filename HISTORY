@@ -1,3 +1,8 @@
+TAG: ?
+DATE: 12/01/2010
+STAFF: lec
+CHANGES: removed goa.config, goa.py/these have been moved to goaload
+
 TAG: annotload-tr10044-BP
 DATE: 12/01/2010
 STAFF: lec
