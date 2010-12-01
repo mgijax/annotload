@@ -37,6 +37,10 @@
 #		field 8: Date (MM/DD/YYYY)
 #		field 9: Notes (max length 255)
 #		field 10: Logical DB Name of Object (field 2), being Annotated (default is MGI); optional
+#			field 10 is not required and should ONLY be used if you need to specify
+#			a logoical DB key OTHER THAN "1" (MGI).
+#			For example, see "entrezgeneload/human/annotations.py".
+#
 #		field 11: Properties
 #			&=& : separates property from its value:
 #				prop1&=&value1
@@ -52,10 +56,6 @@
 #			example of two stanza, two property/value pair:
 #				gene product&=&UniProtKB:P12023&==&external ref&=&PMID:2834384|EXP (continue below)
 #				&===&gene product&=&UniProtKB:P12023&==&external ref&=&PMID:2834384|EXP
-#
-#	field 10 is not required and should ONLY be used if you need to specify
-#	a logoical DB key OTHER THAN "1" (MGI).
-#	For example, see "entrezgeneload/human/annotations.py".
 #
 # Parameters:
 #
@@ -1132,6 +1132,6 @@ else:
     print 'Processing regular (non-mcv) load'
     processFile()
 
-#bcpFiles()
+bcpFiles()
 exit(0)
 
