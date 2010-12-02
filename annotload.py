@@ -42,11 +42,11 @@
 #			For example, see "entrezgeneload/human/annotations.py".
 #
 #		field 11: Properties
-#			&=& : separates property from its value:
+#			&=& : separates property from its value
 #				prop1&=&value1
 #			&==& : separates one property/value pair from another
 #				prop1&=&value1&==&prop2&=&value2
-#			&===& : separates a stanza; a stanza contain >= 1 property/value pairs 
+#			&===& : separates a stanza; a stanza contain >= 1 property/value pair
 #				prop1&=&value1&==&prop2&=&value2&===&prop1&=&value1&==&prop2&=&value2
 #
 #			example of one stanza, one property/value pair:
@@ -790,16 +790,14 @@ def createEvidenceRecord(newAnnotKey, evidenceKey, referenceKey, \
 	    noteKey = noteKey + 1
 
 	#
-	# annotation/evidence/property
-	#
-	# see usage above
+	# storing data in VOC_Evidence_Property
 	#
 	# for each property in the property field 11
-	#     extract each stanza
-	#       extract the property/value pairs
+	#     extract the stanza
+	#       extract the property/value pair
 	#         extract the term and the value
 	#           if the term exists in the pTermDict lookup then
-	#            create a row in the property table
+	#             create a row in the property table
 	#
 
 	if len(properties) > 0:
@@ -808,6 +806,7 @@ def createEvidenceRecord(newAnnotKey, evidenceKey, referenceKey, \
 	    allStanzas = string.split(properties, '&===&')
 
 	    for s in allStanzas:
+
 	        seqnum = 1
 		allProps = string.split(s, '&==&')
 
