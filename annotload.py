@@ -1128,7 +1128,7 @@ if isMCV:
     print 'Processing mcv load'
     processMcvFile()
 else:
-    print 'Processing regular (non-mcv) load'
+    print 'Processing standard (non-mcv, non-go) load'
     processFile()
 
 bcpFiles()
