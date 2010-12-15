@@ -190,7 +190,7 @@ annotProperty = os.environ['ANNOTPROPERTY']
 delByReference = os.environ['DELETEREFERENCE']
 delByUser = os.environ['DELETEUSER'] + '%'
 loadObsolete = os.environ['ANNOTOBSOLETE']
-loadType = ''		# the load type of this annotload run
+loadType = 'Standard'	# the load type of this annotload run
 
 DEBUG = 0		# set DEBUG to false unless preview mode is selected
 
@@ -282,7 +282,7 @@ def init():
 	global propertyFile, propertyFileName
 	global noteFile, noteFileName, noteChunkFile, noteChunkFileName
 	global annotTypeKey, annotKey, annotTypeName, evidencePrimaryKey, noteKey, propertyKey
- 	global isMCV, isGO
+ 	global isMCV, isGO, loadType
 
 	db.useOneConnection(1)
         db.set_sqlUser(user)
