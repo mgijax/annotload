@@ -28,3 +28,7 @@ setenv DELETEUSER		"uniprotload"
 # if 1 load annotations to obsolete terms 
 setenv ANNOTOBSOLETE		0
 
+# vocabulary key (VOC_Vocab._Vocab_key) of the Annotation Property
+# for example:  GO Property has _Vocab_key = 82
+setenv ANNOTPROPERTY		??
+
