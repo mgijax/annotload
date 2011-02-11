@@ -1,3 +1,9 @@
+TAG: annotload-tr10044-3
+DATE: 02/11/2010
+STAFF: sc
+CHANGES:
+1) annotload.py  - max columns 80 so easy to read
+   ANNOTPROPERTY optional
 TAG: annotload-tr10044-2
 TAG: annotload-tr10044-1
 DATE: 12/02/2010
