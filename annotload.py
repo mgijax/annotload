@@ -908,6 +908,7 @@ def processMcvFile():
 	    editor = string.strip(tokens[6])
 	    entryDate = string.strip(tokens[7])
 	    notes = string.strip(tokens[8])
+	    properties = ''
 
 	    if len(tokens) > 9:
 		# field  10 reserved for optional ldb
@@ -916,7 +917,6 @@ def processMcvFile():
 		if col10 != None:
 		    logicalDBKey = col10
 
-	    properties = ''
 	    if len(tokens) > 10:
 		# field 11 reserved for optional properties
 		properties = string.strip(tokens[10])
