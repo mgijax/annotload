@@ -199,9 +199,11 @@ passwordFileName = os.environ['MGD_DBPASSWORDFILE']
 mode = os.environ['ANNOTMODE']
 inputFileName = os.environ['ANNOTINPUTFILE']
 annotTypeName = os.environ['ANNOTTYPENAME']
+
 annotProperty = ''
 if os.environ.has_key('ANNOTPROPERTY'):
     annotProperty = os.environ['ANNOTPROPERTY']
+
 delByReference = os.environ['DELETEREFERENCE']
 delByUser = os.environ['DELETEUSER'] + '%'
 loadObsolete = os.environ['ANNOTOBSOLETE']
@@ -1026,6 +1028,7 @@ def processFile():
 	    editor = string.strip(tokens[6])
 	    entryDate = string.strip(tokens[7])
 	    notes = string.strip(tokens[8])
+	    properties = ''
 
 	    if len(tokens) > 9:
 		# field  10 reserved for optional ldb
@@ -1034,7 +1037,6 @@ def processFile():
 		if col10 != None:
 		    logicalDBKey = col10
 
-		properties = ''
 		if len(tokens) > 10:
 		    # field 11 reserved for optional properties
 		    properties = string.strip(tokens[10])
