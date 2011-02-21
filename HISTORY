@@ -1,3 +1,33 @@
+TAG: annotload-4-4-1-1
+DATE: 02/21/2010
+STAFF: lec
+CHANGES:
+1) merge TR10044 branch to trunk
+
+TAG: annotload-tr10044-6
+TAG: annotload-tr10044-5
+TAG: annotload-tr10044-4
+DATE: 02/16/2010
+STAFF: lec
+CHANGES:
+1) annotload.py
+   moved variable 'properties'
+   from line 1039 to line 1031
+2) added some blank lines for more read-abilty
+
+TAG: annotload-tr10044-3
+DATE: 02/11/2010
+STAFF: sc
+CHANGES:
+1) annotload.py  - max columns 80 so easy to read
+   ANNOTPROPERTY optional
+
+TAG: annotload-tr10044-2
+TAG: annotload-tr10044-1
+DATE: 12/02/2010
+STAFF: lec
+CHANGES: removed goa.config, goa.py/these have been moved to goaload
+
 TAG: annotload-tr10044-BP
 DATE: 12/01/2010
 STAFF: lec
