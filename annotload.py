@@ -215,7 +215,7 @@ mode = os.environ['ANNOTMODE']
 inputFileName = os.environ['ANNOTINPUTFILE']
 annotTypeName = os.environ['ANNOTTYPENAME']
 
-annotProperty = ''
+annotProperty = 0
 if os.environ.has_key('ANNOTPROPERTY'):
     annotProperty = os.environ['ANNOTPROPERTY']
 
@@ -678,7 +678,6 @@ def loadDictionaries():
 	select _Term_key, term
 	from VOC_Term
 	where _Vocab_key = %s\n''' % (annotProperty)
-
     results = db.sql(cmd, 'auto')
 
     for r in results:
