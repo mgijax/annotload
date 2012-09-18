@@ -146,7 +146,7 @@
 # History:
 #
 # lec	09/17/2012
-#	- TR10273-branch; add processMPFile()
+#	- TR10273-branch; add 'isMP';createEvidenceRecord()
 #
 # lec	02/16/2011
 #	- moved "properties = ''" up so that the variable is always set
