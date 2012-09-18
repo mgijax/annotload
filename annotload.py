@@ -145,6 +145,9 @@
 #
 # History:
 #
+# lec	09/17/2012
+#	- TR10273-branch; add processMPFile()
+#
 # lec	02/16/2011
 #	- moved "properties = ''" up so that the variable is always set
 #	  even if it is not used
@@ -269,6 +272,9 @@ isMCV = 0
 # true (1) if this is a GO load
 isGO = 0
 
+# true (1) if this is a MP load
+isMP = 0
+
 def exit(status, message = None):
     '''
     # requires: status, the numeric exit status (integer)
@@ -315,7 +321,7 @@ def init():
     global propertyFile, propertyFileName
     global noteFile, noteFileName, noteChunkFile, noteChunkFileName
     global annotTypeKey, annotKey, annotTypeName, evidencePrimaryKey
-    global noteKey, propertyKey, isMCV, isGO, loadType
+    global noteKey, propertyKey, isMCV, isGO, isMP, loadType
 
     db.useOneConnection(1)
     db.set_sqlUser(user)
@@ -338,8 +344,10 @@ def init():
 	if loadType == 'mcv':
 	    isMCV = 1
 	    #print 'LOAD TYPE: %s' % sys.argv[1]
-	if loadType == 'go':
+	elif loadType == 'go':
 	    isGO = 1
+	elif loadType == 'mp':
+	    isMP = 1
 	
     try:
 	inputFile = open(inputFileName, 'r')
@@ -798,9 +806,17 @@ def createEvidenceRecord(newAnnotKey, evidenceKey, referenceKey, \
 
     global evidencePrimaryKey, evidenceDict, noteKey, propertyKey
 
+    #
     # make sure this is not a duplicate evidence statement
+    #
+    # TR10273
+    # if isMP, add 'properties' to eKey (unique-ness)
+    #
 
-    eKey = '%s:%s:%s' % (newAnnotKey, evidenceKey, referenceKey)
+    if isMP:
+            eKey = '%s:%s:%s:%s' % (newAnnotKey, evidenceKey, referenceKey, properties)
+    else:
+            eKey = '%s:%s:%s' % (newAnnotKey, evidenceKey, referenceKey)
 
     # evidence record may exist in our dictionary already
     # if so, it's a duplicate; let's report it
