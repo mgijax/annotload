@@ -266,6 +266,9 @@ pTermDict = {}		# dictionary of propery terms for quick lookup
 
 loaddate = loadlib.loaddate
 
+# execute this SQL after the bcp files
+execSQL = ''
+
 # true (1) if this is the mcvload
 isMCV = 0
 
@@ -753,6 +756,7 @@ def createAnnotationRecord(objectKey, termKey, qualifierKey, entryDate):
     '''
 
     global annotKey, annotDict
+    global execSQL
 
     # if an annotation already exists for the same 
     # AnnotType/Object/Term/Qualifier, use the same annotation key
@@ -773,6 +777,10 @@ def createAnnotationRecord(objectKey, termKey, qualifierKey, entryDate):
 	annotFile.write('%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
 		% (useAnnotKey, annotTypeKey, objectKey, termKey, \
 	qualifierKey, entryDate, entryDate))
+
+    # for MP annotations only: process header terms
+    if isMP:
+	execSQL = execSQL + '\nexec VOC_processAnnotHeader %s,%s' % (annotTypeKey, objectKey)
 
     return(useAnnotKey)
 
@@ -1131,6 +1139,8 @@ def bcpFiles():
     #
     '''
 
+    global execSQL
+
     annotFile.close()
     evidenceFile.close()
     noteFile.close()
@@ -1179,6 +1189,12 @@ def bcpFiles():
     # for GO/GAF annotations only...
     if isGO:
 	execSQL = 'exec VOC_deleteGOGAFRed "%s"' % (delByUser)
+	print execSQL
+	db.sql(execSQL, None)
+
+    # for MP annotations only: process header terms
+    # see createAnnotationRecord()
+    if isMP:
 	print execSQL
 	db.sql(execSQL, None)
 
