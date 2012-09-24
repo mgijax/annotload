@@ -683,12 +683,12 @@ def loadDictionaries():
     for r in results:
 	termDict[r['accID']] = r['_Object_key']
 
-    # cache property vocabulary
+    # cache property vocabulary(s)
 
     cmd = '''
 	select _Term_key, term
 	from VOC_Term
-	where _Vocab_key = %s\n''' % (annotProperty)
+	where _Vocab_key in (%s)\n''' % (annotProperty)
     results = db.sql(cmd, 'auto')
 
     for r in results:
