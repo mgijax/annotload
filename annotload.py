@@ -278,6 +278,9 @@ isGO = 0
 # true (1) if this is a MP load
 isMP = 0
 
+# true (1) if no bcp files to load
+skipBCP = 1
+
 def exit(status, message = None):
     '''
     # requires: status, the numeric exit status (integer)
@@ -1045,6 +1048,7 @@ def processFile():
     '''
 
     global logicalDBKey
+    global skipBCP
 
     lineNum = 0
 
@@ -1125,6 +1129,9 @@ def processFile():
 	    line, \
 	    lineNum)
 
+        # don't skip the bcp file loading...data exists that needs to be loaded
+        skipBCP = 0
+
        # end of "for line in inputFile.readlines():"
 
 def bcpFiles():
@@ -1149,6 +1156,9 @@ def bcpFiles():
 
     if DEBUG:
 	return
+
+    if skipBCP:
+        return 0
 
     bcpAnnot = 'cat %s | bcp %s..%s in %s -c -t\"\t" -e %s -S%s -U%s >> %s' \
 	    % (passwordFileName, db.get_sqlDatabase(), \
