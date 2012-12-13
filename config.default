@@ -20,15 +20,15 @@ setenv ANNOTINPUTFILE		/data/uniprot/uniprotload/output/go_ec_annot.txt
 setenv ANNOTLOG			/data/uniprot/uniprotload/logs/go_ec.log
 
 # if delete by reference, specify here, else specify 'J:0'
-setenv DELETEREFERENCE		"J:72245"
+setenv DELETEREFERENCE		"J:0"
 
 # if delete by user specify here
-setenv DELETEUSER		"uniprotload"
+setenv DELETEUSER		"none"
 
 # if 1 load annotations to obsolete terms 
 setenv ANNOTOBSOLETE		0
 
 # vocabulary key (VOC_Vocab._Vocab_key) of the Annotation Property
 # for example:  GO Property has _Vocab_key = 82
-setenv ANNOTPROPERTY		??
+setenv ANNOTPROPERTY		0
 

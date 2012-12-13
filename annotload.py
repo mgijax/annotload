@@ -145,6 +145,9 @@
 #
 # History:
 #
+# lec	09/17/2012
+#	- TR10273-branch; add 'isMP';createEvidenceRecord()
+#
 # lec	02/16/2011
 #	- moved "properties = ''" up so that the variable is always set
 #	  even if it is not used
@@ -219,6 +222,10 @@ annotProperty = 0
 if os.environ.has_key('ANNOTPROPERTY'):
     annotProperty = os.environ['ANNOTPROPERTY']
 
+updateTransmission = 0
+if os.environ.has_key('ANNOTTRANSMISSION'):
+    updateTransmission = os.environ['ANNOTTRANSMISSION']
+
 delByReference = os.environ['DELETEREFERENCE']
 delByUser = os.environ['DELETEUSER'] + '%'
 loadObsolete = os.environ['ANNOTOBSOLETE']
@@ -263,11 +270,20 @@ pTermDict = {}		# dictionary of propery terms for quick lookup
 
 loaddate = loadlib.loaddate
 
+# execute this SQL after the bcp files
+execSQL = ''
+
 # true (1) if this is the mcvload
 isMCV = 0
 
 # true (1) if this is a GO load
 isGO = 0
+
+# true (1) if this is a MP load
+isMP = 0
+
+# true (1) if no bcp files to load
+skipBCP = 1
 
 def exit(status, message = None):
     '''
@@ -315,16 +331,19 @@ def init():
     global propertyFile, propertyFileName
     global noteFile, noteFileName, noteChunkFile, noteChunkFileName
     global annotTypeKey, annotKey, annotTypeName, evidencePrimaryKey
-    global noteKey, propertyKey, isMCV, isGO, loadType
+    global noteKey, propertyKey, isMCV, isGO, isMP, loadType
 
     db.useOneConnection(1)
     db.set_sqlUser(user)
     db.set_sqlPasswordFromFile(passwordFileName)
 
-    fdate = mgi_utils.date('%m%d%Y')	# current date
+    #fdate = mgi_utils.date('%m%d%Y')	# current date
+    #diagFileName = tail + '.' + fdate + '.diagnostics'
+    #errorFileName = tail + '.' + fdate + '.error'
+
     head, tail = os.path.split(inputFileName) 
-    diagFileName = tail + '.' + fdate + '.diagnostics'
-    errorFileName = tail + '.' + fdate + '.error'
+    diagFileName = tail + '.diagnostics'
+    errorFileName = tail + '.error'
     annotFileName = tail + '.VOC_Annot.bcp'
     evidenceFileName = tail + '.VOC_Evidence.bcp'
     propertyFileName = tail + '.VOC_Evidence_Property.bcp'
@@ -338,8 +357,10 @@ def init():
 	if loadType == 'mcv':
 	    isMCV = 1
 	    #print 'LOAD TYPE: %s' % sys.argv[1]
-	if loadType == 'go':
+	elif loadType == 'go':
 	    isGO = 1
+	elif loadType == 'mp':
+	    isMP = 1
 	
     try:
 	inputFile = open(inputFileName, 'r')
@@ -443,18 +464,20 @@ def verifyMode():
 
     global DEBUG, delByReferenceKey
 
+    if delByReference != "J:0":
+
+        delByReferenceKey = loadlib.verifyReference( \
+	    delByReference, 0, errorFile)
+
+        if delByReferenceKey is None:
+	    exit(1, 'Invalid Reference: %s\n' % (delByReference))
+    
     if mode == 'new' or mode == 'delete':
 
 	# verify deletion reference
 
 	if delByReference != "J:0":
 
-	    delByReferenceKey = loadlib.verifyReference( \
-		delByReference, 0, errorFile)
-
-	    if delByReferenceKey is None:
-		exit(1, 'Invalid Reference: %s\n' % (delByReference))
-    
 	    db.sql('''select e._Annot_key, e._AnnotEvidence_key into #toDelete
 		from VOC_Annot a, VOC_Evidence e
 		where e._Refs_key = %s
@@ -672,12 +695,12 @@ def loadDictionaries():
     for r in results:
 	termDict[r['accID']] = r['_Object_key']
 
-    # cache property vocabulary
+    # cache property vocabulary(s)
 
     cmd = '''
 	select _Term_key, term
 	from VOC_Term
-	where _Vocab_key = %s\n''' % (annotProperty)
+	where _Vocab_key in (%s)\n''' % (annotProperty)
     results = db.sql(cmd, 'auto')
 
     for r in results:
@@ -745,6 +768,7 @@ def createAnnotationRecord(objectKey, termKey, qualifierKey, entryDate):
     '''
 
     global annotKey, annotDict
+    global execSQL
 
     # if an annotation already exists for the same 
     # AnnotType/Object/Term/Qualifier, use the same annotation key
@@ -765,6 +789,10 @@ def createAnnotationRecord(objectKey, termKey, qualifierKey, entryDate):
 	annotFile.write('%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
 		% (useAnnotKey, annotTypeKey, objectKey, termKey, \
 	qualifierKey, entryDate, entryDate))
+
+    # for MP annotations only: process header terms
+    if isMP:
+	execSQL = execSQL + '\nexec VOC_processAnnotHeader %s,%s' % (annotTypeKey, objectKey)
 
     return(useAnnotKey)
 
@@ -798,9 +826,17 @@ def createEvidenceRecord(newAnnotKey, evidenceKey, referenceKey, \
 
     global evidencePrimaryKey, evidenceDict, noteKey, propertyKey
 
+    #
     # make sure this is not a duplicate evidence statement
+    #
+    # TR10273
+    # if isMP, add 'properties' to eKey (unique-ness)
+    #
 
-    eKey = '%s:%s:%s' % (newAnnotKey, evidenceKey, referenceKey)
+    if isMP:
+            eKey = '%s:%s:%s:%s' % (newAnnotKey, evidenceKey, referenceKey, properties)
+    else:
+            eKey = '%s:%s:%s' % (newAnnotKey, evidenceKey, referenceKey)
 
     # evidence record may exist in our dictionary already
     # if so, it's a duplicate; let's report it
@@ -1021,6 +1057,7 @@ def processFile():
     '''
 
     global logicalDBKey
+    global skipBCP
 
     lineNum = 0
 
@@ -1101,6 +1138,9 @@ def processFile():
 	    line, \
 	    lineNum)
 
+        # don't skip the bcp file loading...data exists that needs to be loaded
+        skipBCP = 0
+
        # end of "for line in inputFile.readlines():"
 
 def bcpFiles():
@@ -1115,6 +1155,8 @@ def bcpFiles():
     #
     '''
 
+    global execSQL
+
     annotFile.close()
     evidenceFile.close()
     noteFile.close()
@@ -1123,6 +1165,9 @@ def bcpFiles():
 
     if DEBUG:
 	return
+
+    if skipBCP:
+        return 0
 
     bcpAnnot = 'cat %s | bcp %s..%s in %s -c -t\"\t" -e %s -S%s -U%s >> %s' \
 	    % (passwordFileName, db.get_sqlDatabase(), \
@@ -1165,6 +1210,18 @@ def bcpFiles():
 	execSQL = 'exec VOC_deleteGOGAFRed "%s"' % (delByUser)
 	print execSQL
 	db.sql(execSQL, None)
+
+    # for MP annotations only: process header terms
+    # see createAnnotationRecord()
+    if isMP:
+	print execSQL
+	db.sql(execSQL, None)
+
+	if updateTransmission:
+	    # update allele transmission by J:
+	    execSQL = 'exec ALL_updateTransmission %s, %s, "%s"' % (annotTypeKey, delByReferenceKey, delByUser)
+	    print execSQL
+	    db.sql(execSQL, None)
 
 #
 # Main
