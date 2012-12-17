@@ -222,10 +222,6 @@ annotProperty = 0
 if os.environ.has_key('ANNOTPROPERTY'):
     annotProperty = os.environ['ANNOTPROPERTY']
 
-updateTransmission = 0
-if os.environ.has_key('ANNOTTRANSMISSION'):
-    updateTransmission = os.environ['ANNOTTRANSMISSION']
-
 delByReference = os.environ['DELETEREFERENCE']
 delByUser = os.environ['DELETEUSER'] + '%'
 loadObsolete = os.environ['ANNOTOBSOLETE']
@@ -503,6 +499,13 @@ def verifyMode():
 		and not exists (select 1 from VOC_Evidence e
 		where d._Annot_key = e._Annot_key)''', None, \
 		    execute = not DEBUG)
+
+	    # remove the Used-FC references
+            if isMP:
+	        db.sql('''delete MGI_Reference_Assoc
+		    where _MGIType_key = 11
+		    and _Refs_key = %s
+		    and _RefAssocType_key = 1017''' % (delByReferenceKey), None, execute = not DEBUG)
 
 	elif delByUser != "none":
 
@@ -791,6 +794,7 @@ def createAnnotationRecord(objectKey, termKey, qualifierKey, entryDate):
 	qualifierKey, entryDate, entryDate))
 
     # for MP annotations only: process header terms
+    # for MP annotations only: add Used-FC reference
     if isMP:
 	execSQL = execSQL + '\nexec VOC_processAnnotHeader %s,%s' % (annotTypeKey, objectKey)
 
@@ -1217,11 +1221,12 @@ def bcpFiles():
 	print execSQL
 	db.sql(execSQL, None)
 
-	if updateTransmission:
-	    # update allele transmission by J:
-	    execSQL = 'exec ALL_updateTransmission %s, %s, "%s"' % (annotTypeKey, delByReferenceKey, delByUser)
-	    print execSQL
-	    db.sql(execSQL, None)
+	# post-MP stuff
+	# update allele transmission by J:
+	# add 'Used-FC' reference by J:
+	execSQL = 'exec ALL_postMP %s, %s, "%s"' % (annotTypeKey, delByReferenceKey, delByUser)
+	print execSQL
+	db.sql(execSQL, None)
 
 #
 # Main
