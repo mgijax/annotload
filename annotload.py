@@ -793,11 +793,6 @@ def createAnnotationRecord(objectKey, termKey, qualifierKey, entryDate):
 		% (useAnnotKey, annotTypeKey, objectKey, termKey, \
 	qualifierKey, entryDate, entryDate))
 
-    # for MP annotations only: process header terms
-    # for MP annotations only: add Used-FC reference
-    if isMP:
-	execSQL = execSQL + '\nexec VOC_processAnnotHeader %s,%s' % (annotTypeKey, objectKey)
-
     return(useAnnotKey)
 
 def createEvidenceRecord(newAnnotKey, evidenceKey, referenceKey, \
@@ -1216,12 +1211,9 @@ def bcpFiles():
 	db.sql(execSQL, None)
 
     # for MP annotations only: process header terms
-    # see createAnnotationRecord()
     if isMP:
-	print execSQL
-	db.sql(execSQL, None)
-
 	# post-MP stuff
+	# add header terms by annotation type
 	# update allele transmission by J:
 	# add 'Used-FC' reference by J:
 	execSQL = 'exec ALL_postMP %s, %s, "%s"' % (annotTypeKey, delByReferenceKey, delByUser)
