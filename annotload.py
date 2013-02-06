@@ -931,7 +931,9 @@ def processMcvFile():
     #       nothing
     #
     '''
-    global logicalDBKey, annotDict
+    global logicalDBKey, annotDict, skipBCP
+
+    skipBCP = 0
 
     # running list of markers in the input so we don't delete more than once
     mkrKeyList = []

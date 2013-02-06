@@ -1,3 +1,8 @@
+TAG: annotload-5-1-1-4
+DATE: 01/06/2013
+STAFF: sc
+CHANGES: Fixed bug whereby bcp is skipped if processMcvFile is called
+
 TAG: annotload-5-1-1-3
 TAG: annotload-5-1-1-2
 TAG: annotload-5-1-1-1
