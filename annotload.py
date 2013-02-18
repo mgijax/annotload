@@ -278,6 +278,9 @@ isGO = 0
 # true (1) if this is a MP load
 isMP = 0
 
+# true (1) if this is a GOA Human Load
+isGoaHuman = 0
+
 # true (1) if no bcp files to load
 skipBCP = 1
 
@@ -327,7 +330,7 @@ def init():
     global propertyFile, propertyFileName
     global noteFile, noteFileName, noteChunkFile, noteChunkFileName
     global annotTypeKey, annotKey, annotTypeName, evidencePrimaryKey
-    global noteKey, propertyKey, isMCV, isGO, isMP, loadType
+    global noteKey, propertyKey, isMCV, isGO, isMP, isGoaHuman, loadType
 
     db.useOneConnection(1)
     db.set_sqlUser(user)
@@ -357,6 +360,8 @@ def init():
 	    isGO = 1
 	elif loadType == 'mp':
 	    isMP = 1
+	elif loadType == 'goahuman':
+	    isGoaHuman = 1
 	
     try:
 	inputFile = open(inputFileName, 'r')
@@ -830,10 +835,16 @@ def createEvidenceRecord(newAnnotKey, evidenceKey, referenceKey, \
     #
     # TR10273
     # if isMP, add 'properties' to eKey (unique-ness)
+    # 
+    # TR6519/N2MO
+    # if isGoahuman, add 'properties' and entryDate to eKey to determine uniqueness
+    # goahumanload is delete/reload, so this detects only dups in the input file
     #
 
     if isMP:
             eKey = '%s:%s:%s:%s' % (newAnnotKey, evidenceKey, referenceKey, properties)
+    elif isGoaHuman:
+	    eKey = '%s:%s:%s:%s:%s:%s' % (newAnnotKey, evidenceKey, referenceKey, properties, entryDate, inferredFrom )
     else:
             eKey = '%s:%s:%s' % (newAnnotKey, evidenceKey, referenceKey)
 
@@ -1207,7 +1218,7 @@ def bcpFiles():
     os.system(bcpProperty)
 
     # for GO/GAF annotations only...
-    if isGO:
+    if isGO or isGoaHuman:
 	execSQL = 'exec VOC_deleteGOGAFRed "%s"' % (delByUser)
 	print execSQL
 	db.sql(execSQL, None)
