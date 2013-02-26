@@ -281,6 +281,9 @@ isMP = 0
 # true (1) if this is a GOA Human Load
 isGoaHuman = 0
 
+# true (1) if this is a GO Rat Load
+isGoRat = 0
+
 # true (1) if no bcp files to load
 skipBCP = 1
 
@@ -330,7 +333,8 @@ def init():
     global propertyFile, propertyFileName
     global noteFile, noteFileName, noteChunkFile, noteChunkFileName
     global annotTypeKey, annotKey, annotTypeName, evidencePrimaryKey
-    global noteKey, propertyKey, isMCV, isGO, isMP, isGoaHuman, loadType
+    global noteKey, propertyKey, isMCV, isGO, isMP, isGoaHuman, isGoRat
+    global loadType
 
     db.useOneConnection(1)
     db.set_sqlUser(user)
@@ -362,6 +366,8 @@ def init():
 	    isMP = 1
 	elif loadType == 'goahuman':
 	    isGoaHuman = 1
+	elif loadType == 'gorat':
+	    isGoRat = 1
 	
     try:
 	inputFile = open(inputFileName, 'r')
@@ -837,13 +843,13 @@ def createEvidenceRecord(newAnnotKey, evidenceKey, referenceKey, \
     # if isMP, add 'properties' to eKey (unique-ness)
     # 
     # TR6519/N2MO
-    # if isGoahuman, add 'properties' and entryDate to eKey to determine uniqueness
+    # if isGoahuman/isGoRat, add 'properties' and entryDate to eKey to determine uniqueness
     # goahumanload is delete/reload, so this detects only dups in the input file
     #
 
     if isMP:
             eKey = '%s:%s:%s:%s' % (newAnnotKey, evidenceKey, referenceKey, properties)
-    elif isGoaHuman:
+    elif isGoaHuman or isGoRat:
 	    eKey = '%s:%s:%s:%s:%s:%s' % (newAnnotKey, evidenceKey, referenceKey, properties, entryDate, inferredFrom )
     else:
             eKey = '%s:%s:%s' % (newAnnotKey, evidenceKey, referenceKey)
