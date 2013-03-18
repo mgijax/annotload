@@ -850,7 +850,7 @@ def createEvidenceRecord(newAnnotKey, evidenceKey, referenceKey, \
     if isMP:
             eKey = '%s:%s:%s:%s' % (newAnnotKey, evidenceKey, referenceKey, properties)
     elif isGoaHuman or isGoRat:
-	    eKey = '%s:%s:%s:%s:%s:%s' % (newAnnotKey, evidenceKey, referenceKey, properties, entryDate, inferredFrom )
+	    eKey = '%s:%s:%s:%s:%s' % (newAnnotKey, evidenceKey, referenceKey, properties, inferredFrom )
     else:
             eKey = '%s:%s:%s' % (newAnnotKey, evidenceKey, referenceKey)
 
