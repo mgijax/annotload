@@ -1,4 +1,4 @@
-#!/bin/csh -fx
+#!/bin/csh -f
 
 #
 # Annotation Load Wrapper
