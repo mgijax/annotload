@@ -282,7 +282,7 @@ isMP = 0
 isGO = 0
 
 # true (1) if this is a GOA Mouse load
-isGOmouse = 0
+isGOAmouse = 0
 
 # true (1) if this is a GOA Human Load
 isGOAhuman = 0
