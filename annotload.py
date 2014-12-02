@@ -145,6 +145,9 @@
 #
 # History:
 #
+# jsb	08/18/2014
+#	- added handling for isDiseaseMarker and isMPMarker rollup annotations
+#
 # lec	01/06/2014
 #	- TR11518/add field 8/Inferred-From as duplicate check
 #
@@ -290,6 +293,12 @@ isGOAhuman = 0
 # true (1) if this is a GO Rat Load
 isGOrat = 0
 
+# true (1) if this is a disease/marker rollup load
+isDiseaseMarker = 0
+
+# true (1) if this is an MP/marker rollup load
+isMPMarker = 0
+
 # true (1) if no bcp files to load
 skipBCP = 1
 
@@ -341,6 +350,7 @@ def init():
     global annotTypeKey, annotKey, annotTypeName, evidencePrimaryKey
     global noteKey, propertyKey
     global isMCV, isMP, isGO, isGOAmouse, isGOAhuman, isGOrat
+    global isDiseaseMarker, isMPMarker
     global loadType
 
     db.useOneConnection(1)
@@ -384,6 +394,12 @@ def init():
 
 	elif loadType == 'gorat':
 	    isGOrat = 1
+	
+	elif loadType == 'diseaseMarker':
+	    isDiseaseMarker = 1
+	
+	elif loadType == 'mpMarker':
+	    isMPMarker = 1
 	
     try:
 	inputFile = open(inputFileName, 'r')
@@ -530,7 +546,11 @@ def verifyMode():
 		    and _Refs_key = %s
 		    and _RefAssocType_key = 1017''' % (delByReferenceKey), None, execute = not DEBUG)
 
-	elif delByUser != "none":
+	elif delByUser != "none%":
+	    # updated this to include the wildcard at the end of the comparison
+	    # above, as it is always added to the DELETEUSER environment
+	    # variable.  (so this code was always getting executed, even when
+	    # the config file had the DELETEUSER set to 'none') - jsb, 11/3/14
 
 	    db.sql('''select e._Annot_key, e._AnnotEvidence_key into #toDelete 
 		from VOC_Annot a, VOC_Evidence e, MGI_User u 
@@ -865,6 +885,8 @@ def createEvidenceRecord(newAnnotKey, evidenceKey, referenceKey, \
 
     if isMP:
             eKey = '%s:%s:%s:%s' % (newAnnotKey, evidenceKey, referenceKey, properties)
+    elif isMPMarker:
+	    eKey = '%s:%s:%s:%s:%s' % (newAnnotKey, evidenceKey, referenceKey, properties, notes)
     elif isGOAmouse or isGOAhuman or isGOrat:
 	    eKey = '%s:%s:%s:%s:%s' % (newAnnotKey, evidenceKey, referenceKey, properties, inferredFrom )
     else:
