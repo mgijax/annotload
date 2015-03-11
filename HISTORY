@@ -1,3 +1,8 @@
+TAG: annotload-5-2-1-2
+DATE: 03/11/2015
+STAFF: sc
+CHANGES: TR11674 - added handling for isDiseaseMarker and isMPMarker
+
 TAG: annotload-5-2-1-1
 DATE: 12/02/2014
 STAFF: sc

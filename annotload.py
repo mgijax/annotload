@@ -872,6 +872,8 @@ def createEvidenceRecord(newAnnotKey, evidenceKey, referenceKey, \
     #
     # make sure this is not a duplicate evidence statement
     #
+    # TR11674 - added handling for isDiseaseMarker and isMPMarker
+    #
     # TR11518
     #	added isGOAmouse to 'properties' and 'inferredFrom' (same as isGOAhuman and isGOrat)
     #
@@ -887,7 +889,7 @@ def createEvidenceRecord(newAnnotKey, evidenceKey, referenceKey, \
             eKey = '%s:%s:%s:%s' % (newAnnotKey, evidenceKey, referenceKey, properties)
     elif isMPMarker:
 	    eKey = '%s:%s:%s:%s:%s' % (newAnnotKey, evidenceKey, referenceKey, properties, notes)
-    elif isGOAmouse or isGOAhuman or isGOrat:
+    elif isGOAmouse or isGOAhuman or isGOrat or isDiseaseMarker or isMPMarker:
 	    eKey = '%s:%s:%s:%s:%s' % (newAnnotKey, evidenceKey, referenceKey, properties, inferredFrom )
     else:
             eKey = '%s:%s:%s' % (newAnnotKey, evidenceKey, referenceKey)
