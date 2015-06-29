@@ -145,6 +145,9 @@
 #
 # History:
 #
+# pf	05/15/2015
+#	- sybase to postgres conversion work
+#
 # jsb	08/18/2014
 #	- added handling for isDiseaseMarker and isMPMarker rollup annotations
 #
@@ -362,6 +365,7 @@ def init():
     #errorFileName = tail + '.' + fdate + '.error'
 
     head, tail = os.path.split(inputFileName) 
+
     diagFileName = tail + '.diagnostics'
     errorFileName = tail + '.error'
     annotFileName = tail + '.VOC_Annot.bcp'
@@ -445,7 +449,7 @@ def init():
     db.set_sqlLogFunction(db.sqlLogAll)
 
     # Set Log File Descriptor
-    db.set_sqlLogFD(diagFile)
+    #db.set_sqlLogFD(diagFile)
 
     diagFile.write('Start Date/Time: %s\n' % (mgi_utils.date()))
     diagFile.write('Server: %s\n' % (db.get_sqlServer()))
@@ -478,7 +482,7 @@ def verifyAnnotType():
     annotTypeName = re.sub('"', '', annotTypeName)
 
     results = db.sql('''
-	select _AnnotType_key from VOC_AnnotType where name = "%s" 
+	select _AnnotType_key from VOC_AnnotType where name = '%s' 
 	''' % (annotTypeName), 'auto')
 
     if len(results) == 0:
@@ -509,42 +513,50 @@ def verifyMode():
 
         if delByReferenceKey is None:
 	    exit(1, 'Invalid Reference: %s\n' % (delByReference))
-    
+
     if mode == 'new' or mode == 'delete':
 
 	# verify deletion reference
 
 	if delByReference != "J:0":
 
-	    db.sql('''select e._Annot_key, e._AnnotEvidence_key 
-		into #toDelete
+	    db.sql('''create temp table toDelete as 
+	        select e._Annot_key, e._AnnotEvidence_key 
 		from VOC_Annot a, VOC_Evidence e
 		where e._Refs_key = %s
 		and e._Annot_key = a._Annot_key 
 		and a._AnnotType_key = %s
 		''' % (delByReferenceKey, annotTypeKey), None, execute = not DEBUG)
+	    db.commit()
 
-	    db.sql('create index idx1 on #toDelete(_Annot_key)', None)
-	    db.sql('create index idx2 on #toDelete(_AnnotEvidence_key)', None)
-
-	    db.sql('''delete VOC_Evidence_Property 
-		from #toDelete d, VOC_Evidence_Property p
+	    db.sql('create index td_idx1 on toDelete(_Annot_key)', None)
+	    db.sql('create index td_idx2 on toDelete(_AnnotEvidence_key)', None)
+	    db.commit()
+	    
+	    db.sql('''delete from VOC_Evidence_Property p
+		using toDelete d
 		where d._AnnotEvidence_key = p._AnnotEvidence_key''', None, execute = not DEBUG)
 
-	    db.sql('''delete VOC_Evidence from #toDelete d, VOC_Evidence e
+	    db.sql('''delete from VOC_Evidence e
+		using toDelete d
 		where d._AnnotEvidence_key = e._AnnotEvidence_key''', None, execute = not DEBUG)
 
-	    db.sql('''delete VOC_Annot from #toDelete d, VOC_Annot a 
+	    db.sql('''delete from VOC_Annot a
+	        using toDelete d
 		where d._Annot_key = a._Annot_key
 		and not exists (select 1 from VOC_Evidence e
 		where d._Annot_key = e._Annot_key)''', None, execute = not DEBUG)
 
 	    # remove the Used-FC references
             if isMP:
-	        db.sql('''delete MGI_Reference_Assoc
+	        db.sql('''delete from MGI_Reference_Assoc
 		    where _MGIType_key = 11
 		    and _Refs_key = %s
 		    and _RefAssocType_key = 1017''' % (delByReferenceKey), None, execute = not DEBUG)
+
+	    db.sql('''drop table todelete''', None)
+	    db.commit()
+	    
 
 	elif delByUser != "none%":
 	    # updated this to include the wildcard at the end of the comparison
@@ -552,31 +564,35 @@ def verifyMode():
 	    # variable.  (so this code was always getting executed, even when
 	    # the config file had the DELETEUSER set to 'none') - jsb, 11/3/14
 
-	    db.sql('''select e._Annot_key, e._AnnotEvidence_key into #toDelete 
+	    db.sql('''select e._Annot_key, e._AnnotEvidence_key into temp toDelete 
 		from VOC_Annot a, VOC_Evidence e, MGI_User u 
 		where e._CreatedBy_key = u._User_key 
-		and u.login like "%s"
+		and u.login like '%s'
 		and e._Annot_key = a._Annot_key
 		and a._AnnotType_key = %s
 		''' % (delByUser, annotTypeKey), None, execute = not DEBUG)
 
-	    db.sql('create index idx1 on #toDelete(_Annot_key)', None)
-	    db.sql('create index idx2 on #toDelete(_AnnotEvidence_key)', None)
+	    db.sql('create index td2_idx1 on toDelete(_Annot_key)', None)
+	    db.sql('create index td2_idx2 on toDelete(_AnnotEvidence_key)', None)
 
-	    db.sql('''delete VOC_Evidence_Property 
-		from #toDelete d, VOC_Evidence_Property p
-		where d._AnnotEvidence_key = p._AnnotEvidence_key''', None, execute = not DEBUG)
+	    db.sql('''delete from VOC_Evidence_Property  p
+                using toDelete d
+                where d._AnnotEvidence_key = p._AnnotEvidence_key''', None, execute = not DEBUG)
 
-	    db.sql('''delete VOC_Evidence from #toDelete d, VOC_Evidence e 
-		where d._AnnotEvidence_key = e._AnnotEvidence_key''', None, execute = not DEBUG)
+            db.sql('''delete from VOC_Evidence e using toDelete d
+                where d._AnnotEvidence_key = e._AnnotEvidence_key''', None, execute = not DEBUG)
 
-	    db.sql('''delete VOC_Annot from #toDelete d, VOC_Annot a 
-		  where d._Annot_key = a._Annot_key
-		  and not exists (select 1 from VOC_Evidence e
-		  where d._Annot_key = e._Annot_key)
-		  ''', None, execute = not DEBUG)
+            db.sql('''delete from VOC_Annot a using toDelete d
+                  where d._Annot_key = a._Annot_key
+                  and not exists (select 1 from VOC_Evidence e
+                  where d._Annot_key = e._Annot_key)
+                  ''', None, execute = not DEBUG)
+
+	    db.sql('''drop table todelete''', None)
+	    db.commit()
+
 	else:
-	    db.sql('''delete VOC_Annot from VOC_Annot 
+	    db.sql('''delete from VOC_Annot 
 		where _AnnotType_key = %s''' % (annotTypeKey), None, \
 		    execute = not DEBUG)
 
@@ -652,7 +668,7 @@ def verifyObject(objectID, logicalDBKey, lineNum):
 	results = db.sql('''
 	    select a._Object_key 
 	    from ACC_Accession a, VOC_AnnotType t
-	    where a.accID = "%s"
+	    where lower(a.accID) = lower('%s')
 	    and a._LogicalDB_key = %s
 	    and a._MGIType_key = t._MGIType_key
 	    and t._AnnotType_key = %s
@@ -681,26 +697,26 @@ def setPrimaryKeys():
 
     global annotKey, evidencePrimaryKey, noteKey, propertyKey
 
-    results = db.sql('select maxKey = max(_Annot_key) + 1 from VOC_Annot', \
+    results = db.sql('select max(_Annot_key) + 1 as maxKey from VOC_Annot', \
 		'auto')
     if results[0]['maxKey'] is None:
 	annotKey = 1000
     else:
 	annotKey = results[0]['maxKey']
 
-    results = db.sql('select maxKey = max(_AnnotEvidence_key) + 1 from VOC_Evidence', 'auto')
+    results = db.sql('select max(_AnnotEvidence_key) + 1 as maxKey from VOC_Evidence', 'auto')
     if results[0]['maxKey'] is None:
 	evidencePrimaryKey = 1000
     else:
 	evidencePrimaryKey = results[0]['maxKey']
 
-    results = db.sql('select maxKey = max(_Note_key) + 1 from MGI_Note', 'auto')
+    results = db.sql('select max(_Note_key) + 1 as maxKey from MGI_Note', 'auto')
     if results[0]['maxKey'] is None:
 	noteKey = 1000
     else:
 	noteKey = results[0]['maxKey']
 
-    results = db.sql('''select maxKey = max(_EvidenceProperty_key) + 1 
+    results = db.sql('''select max(_EvidenceProperty_key) + 1 as maxKey 
 	from VOC_Evidence_Property''', 'auto')
     if results[0]['maxKey'] is None:
 	propertyKey = 1000
@@ -1103,6 +1119,8 @@ def processMcvFile():
 	    line, \
 	    lineNum)
 
+    db.commit()
+
 def processFile():
     '''
     # requires:
@@ -1199,7 +1217,8 @@ def processFile():
         # don't skip the bcp file loading...data exists that needs to be loaded
         skipBCP = 0
 
-       # end of "for line in inputFile.readlines():"
+    # end of "for line in inputFile.readlines():"
+    db.commit()
 
 def bcpFiles():
     '''
@@ -1227,62 +1246,71 @@ def bcpFiles():
     if skipBCP:
         return 0
 
-    bcpAnnot = 'cat %s | bcp %s..%s in %s -c -t\"\t" -e %s -S%s -U%s >> %s' \
-	    % (passwordFileName, db.get_sqlDatabase(), \
-	    'VOC_Annot', annotFileName, errorFileName, \
-	    db.get_sqlServer(), db.get_sqlUser(), diagFileName)
-    diagFile.write('%s\n' % bcpAnnot)
+    db.commit()
 
-    bcpEvidence = 'cat %s | bcp %s..%s in %s -c -t\"\t" -e %s -S%s -U%s >> %s' \
-	    % (passwordFileName, db.get_sqlDatabase(), \
-	    'VOC_Evidence', evidenceFileName, errorFileName, \
-	    db.get_sqlServer(), db.get_sqlUser(), diagFileName)
-    diagFile.write('%s\n' % bcpEvidence)
+    bcpCommand = os.environ['PG_DBUTILS'] + '/bin/bcpin.csh'
 
-    bcpNote = 'cat %s | bcp %s..%s in %s -c -t\"\t" -e %s -S%s -U%s >> %s' \
-	    % (passwordFileName, db.get_sqlDatabase(), \
-	    'MGI_Note', noteFileName, errorFileName, \
-	    db.get_sqlServer(), db.get_sqlUser(), diagFileName)
-    diagFile.write('%s\n' % bcpNote)
+    currentDir = os.getcwd()
 
-    bcpNoteChunk = 'cat %s | bcp %s..%s in %s -c -t\"\t" -e %s -S%s -U%s >> %s' \
-	    % (passwordFileName, db.get_sqlDatabase(), \
-	    'MGI_NoteChunk', noteChunkFileName, errorFileName, \
-	    db.get_sqlServer(), db.get_sqlUser(), diagFileName)
-    diagFile.write('%s\n' % bcpNoteChunk)
+    bcpAnnotCmd = '%s %s %s %s %s %s "\\t" "\\n" mgd' % \
+        (bcpCommand, db.get_sqlServer(), db.get_sqlDatabase(),'VOC_Annot',
+        currentDir, annotFileName)
+    diagFile.write('%s\n' % bcpAnnotCmd)
 
-    bcpProperty = 'cat %s | bcp %s..%s in %s -c -t\"\t" -e %s -S%s -U%s >> %s' \
-	    % (passwordFileName, db.get_sqlDatabase(), \
-	    'VOC_Evidence_Property', propertyFileName, errorFileName, \
-	    db.get_sqlServer(), db.get_sqlUser(), diagFileName)
-    diagFile.write('%s\n' % bcpProperty)
+    bcpEvidenceCmd = '%s %s %s %s %s %s "\\t" "\\n" mgd' % \
+        (bcpCommand, db.get_sqlServer(), db.get_sqlDatabase(),'VOC_Evidence',
+        currentDir, evidenceFileName)
+    diagFile.write('%s\n' % bcpEvidenceCmd)
 
-    os.system(bcpAnnot)
-    os.system(bcpEvidence)
-    os.system(bcpNote)
-    os.system(bcpNoteChunk)
-    os.system(bcpProperty)
+    bcpNoteCmd = '%s %s %s %s %s %s "\\t" "\\n" mgd' % \
+        (bcpCommand, db.get_sqlServer(), db.get_sqlDatabase(),'MGI_Note',
+        currentDir, noteFileName)
+    diagFile.write('%s\n' % bcpNoteCmd)
+
+    bcpNoteChunkCmd = '%s %s %s %s %s %s "\\t" "\\n" mgd' % \
+        (bcpCommand, db.get_sqlServer(), db.get_sqlDatabase(),'MGI_NoteChunk',
+        currentDir, noteChunkFileName)
+    diagFile.write('%s\n' % bcpNoteChunkCmd)
+
+    bcpPropertyCmd = '%s %s %s %s %s %s "\\t" "\\n" mgd' % \
+        (bcpCommand, db.get_sqlServer(), db.get_sqlDatabase(),'VOC_Evidence_Property',
+        currentDir, propertyFileName)
+    diagFile.write('%s\n' % bcpPropertyCmd)
+
+
+
+    print ('BCPing files')
+    os.system(bcpAnnotCmd)
+    os.system(bcpEvidenceCmd)
+    os.system(bcpNoteCmd)
+    os.system(bcpNoteChunkCmd)
+    os.system(bcpPropertyCmd)
+    print ('BCP done')
+
 
     # for GO/GAF annotations only...
     if isGO or isGOAmouse or isGOAhuman:
-	execSQL = 'exec VOC_deleteGOGAFRed "%s"' % (delByUser)
-	print execSQL
-	db.sql(execSQL, None)
+        execSQL = 'select * from VOC_deleteGOGAFRed(\'%s\')' % (delByUser)
+        print execSQL
+        db.sql(execSQL, None)
+	db.commit()
 
     # for MP annotations only: process header terms
     if isMP:
-	# post-MP stuff
-	# add header terms by annotation type
-	# update allele transmission by J:
-	# add 'Used-FC' reference by J:
-	execSQL = 'exec ALL_postMP %s, %s, "%s"' % (annotTypeKey, delByReferenceKey, delByUser)
-	print execSQL
-	db.sql(execSQL, None)
+        # post-MP stuff
+        # add header terms by annotation type
+        # update allele transmission by J:
+        # add 'Used-FC' reference by J:
+        execSQL = 'select * from ALL_postMP( %s, %s, \'%s\')' % (annotTypeKey, delByReferenceKey, delByUser)
+        print execSQL
+        db.sql(execSQL, None)
+	db.commit()
 
 #
 # Main
 #
 
+print ('\nannotload.py - main() started')
 init()
 verifyAnnotType()
 verifyMode()
@@ -1290,12 +1318,10 @@ setPrimaryKeys()
 loadDictionaries()
 
 if isMCV:
-    print 'Processing mcv load'
     processMcvFile()
 else:
-    print 'Processing standard (non-mcv) load'
     processFile()
 
 bcpFiles()
 
-exit(0)
+print ('\nannotload.py - main() finished')

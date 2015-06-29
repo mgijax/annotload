@@ -26,4 +26,6 @@ endif
 
 date >> ${ANNOTLOG}
 ${ANNOTLOAD}/annotload.py ${LOADTYPE} | tee -a ${ANNOTLOG}
+set resultcode=$?
 date >> ${ANNOTLOG}
+exit $resultcode
