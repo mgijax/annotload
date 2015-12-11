@@ -145,6 +145,9 @@
 #
 # History:
 #
+# lec	12/8/2015
+#	- TR12070/12011/fix for postgres/isMP
+#
 # pf	05/15/2015
 #	- sybase to postgres conversion work
 #
@@ -217,6 +220,10 @@ import mgi_utils
 import loadlib
 import vocabloadlib
 
+#db.setTrace(True)
+db.setAutoTranslate(False)
+db.setAutoTranslateBE(False)
+
 # globals
 
 # from configuration file
@@ -264,7 +271,6 @@ noteKey = 0		# MGI_Note._Note_key
 logicalDBKey = 1	# ACC_Accession._LogicalDB_key (default is "MGI", 1)
 mgiNoteObjectKey = 25	# MGI_Note._MGIType_key
 mgiNoteTypeKey = 1008	# MGI_Note._NoteType_key
-mgiNoteSeqNum = 1	# MGI_NoteChunk.sequenceNum
 
 termDict = {}		# dictionary of terms for quick lookup
 objectDict = {}		# dictionary of objects for quick lookup
@@ -593,8 +599,8 @@ def verifyMode():
 
 	else:
 	    db.sql('''delete from VOC_Annot 
-		where _AnnotType_key = %s''' % (annotTypeKey), None, \
-		    execute = not DEBUG)
+		where _AnnotType_key = %s
+		''' % (annotTypeKey), None, execute = not DEBUG)
 
     elif mode == 'append':
 	pass
@@ -697,8 +703,7 @@ def setPrimaryKeys():
 
     global annotKey, evidencePrimaryKey, noteKey, propertyKey
 
-    results = db.sql('select max(_Annot_key) + 1 as maxKey from VOC_Annot', \
-		'auto')
+    results = db.sql('select max(_Annot_key) + 1 as maxKey from VOC_Annot', 'auto')
     if results[0]['maxKey'] is None:
 	annotKey = 1000
     else:
@@ -716,8 +721,7 @@ def setPrimaryKeys():
     else:
 	noteKey = results[0]['maxKey']
 
-    results = db.sql('''select max(_EvidenceProperty_key) + 1 as maxKey 
-	from VOC_Evidence_Property''', 'auto')
+    results = db.sql('''select max(_EvidenceProperty_key) + 1 as maxKey from VOC_Evidence_Property''', 'auto')
     if results[0]['maxKey'] is None:
 	propertyKey = 1000
     else:
@@ -776,8 +780,7 @@ def loadDictionaries():
 	where _AnnotType_key = %s
 	''' % (annotTypeKey), 'auto')
     for r in results:
-	key = '%s:%s:%s:%s' % (annotTypeKey, r['_Object_key'], \
-	    r['_Term_key'], r['_Qualifier_key'])
+	key = '%s:%s:%s:%s' % (annotTypeKey, r['_Object_key'], r['_Term_key'], r['_Qualifier_key'])
 	value = r['_Annot_key']
 	annotDict[key] = value
 
@@ -790,8 +793,7 @@ def loadDictionaries():
 
     results = db.sql(cmd, 'auto')
     for r in results:
-	key = '%s:%s:%s' % (r['_Annot_key'], r['_EvidenceTerm_key'], \
-	    r['_Refs_key'])
+	key = '%s:%s:%s' % (r['_Annot_key'], r['_EvidenceTerm_key'], r['_Refs_key'])
 	value = r['_Annot_key']
 	evidenceDict[key] = value
 
@@ -850,8 +852,7 @@ def createAnnotationRecord(objectKey, termKey, qualifierKey, entryDate):
 	# create the new VOC_Annot record
 
 	annotFile.write('%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
-		% (useAnnotKey, annotTypeKey, objectKey, termKey, \
-	qualifierKey, entryDate, entryDate))
+		% (useAnnotKey, annotTypeKey, objectKey, termKey, qualifierKey, entryDate, entryDate))
 
     return(useAnnotKey)
 
@@ -914,8 +915,7 @@ def createEvidenceRecord(newAnnotKey, evidenceKey, referenceKey, \
     # if so, it's a duplicate; let's report it
 
     if evidenceDict.has_key(eKey):
-	    errorFile.write('Duplicate evidence %d: %s\n' % \
-		(lineNum, line))
+	    errorFile.write('Duplicate evidence %d: %s\n' % (lineNum, line))
 	    return
 
     # not a duplicate
@@ -927,25 +927,22 @@ def createEvidenceRecord(newAnnotKey, evidenceKey, referenceKey, \
 		inferredFrom, editorKey, editorKey, entryDate, entryDate))
 
     # storing data in MGI_Note/MGI_NoteChunk
+    #
+    # note that the MGI_NoteChunk is now a 'text' field
+    # so the notes no longer need to be split into chunks of 255
+    # therefore, the sequenceNum for any new notes will always = 1
+    # see TR12083
+    #
 
-    mgiNoteSeqNum = 1
     if len(notes) > 0:
 
 	noteFile.write('%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
 	    % (noteKey, evidencePrimaryKey, mgiNoteObjectKey, mgiNoteTypeKey, \
 	       editorKey, editorKey, entryDate, entryDate))
 
-	while len(notes) > 255:
-	    noteChunkFile.write('%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
-		% (noteKey, mgiNoteSeqNum, notes[:255], editorKey, \
-		editorKey, entryDate, entryDate))
-	    notes = notes[255:]
-	    mgiNoteSeqNum = mgiNoteSeqNum + 1
-
-	if len(notes) > 0:
-	    noteChunkFile.write('%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
-		% (noteKey, mgiNoteSeqNum, notes, editorKey, editorKey, \
-		entryDate, entryDate))
+	noteChunkFile.write('%s\t1\t%s\t%s\t%s\t%s\t%s\n' \
+	    % (noteKey, notes, editorKey, \
+	       editorKey, entryDate, entryDate))
 
 	noteKey = noteKey + 1
 
@@ -977,8 +974,8 @@ def createEvidenceRecord(newAnnotKey, evidenceKey, referenceKey, \
 		if pTermDict.has_key(pTerm):
 		    propertyFile.write('%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
 		    % (propertyKey, evidencePrimaryKey, pTermDict[pTerm], \
-		    stanza, seqnum, pValue, editorKey, editorKey, \
-		    entryDate, entryDate))
+		       stanza, seqnum, pValue, editorKey, editorKey, \
+		       entryDate, entryDate))
 
 		    seqnum = seqnum + 1
 		    propertyKey = propertyKey + 1
@@ -1052,8 +1049,10 @@ def processMcvFile():
 
 	# if we just have an MGI ID delete all annotations and continue
 	if termID == '' and jnum == '' and evidence == '' and \
-	    qualifier == '' and editor == '':
+	   qualifier == '' and editor == '':
+
 	    markerKey = verifyObject(mgiID, logicalDBKey, lineNum)
+
 	    if markerKey == 0: # not valid
 		# skip this record, verifyObject logs to discrepancy file
 		print 'skipping record, invalid MGI ID for delete only mode'
@@ -1061,8 +1060,7 @@ def processMcvFile():
 	    else:
 		# delete existing annotations for this marker/annotation type
 		# and go on to next record
-		print 'delete only mode, deleting all annotations for %s' % \
-		    markerKey
+		print 'delete only mode, deleting all annotations for %s' % markerKey
 		#print deleteSQL % markerKey
 		db.sql(deleteSQL % markerKey, None)
 		continue
@@ -1071,18 +1069,16 @@ def processMcvFile():
 	termKey = verifyTerm(termID, lineNum)
 	markerKey = verifyObject(mgiID, logicalDBKey, lineNum)
 	referenceKey = loadlib.verifyReference(jnum, lineNum, errorFile)
-	evidenceKey = vocabloadlib.verifyEvidence( \
-	    evidence, annotTypeKey, lineNum, errorFile)
-	qualifierKey = vocabloadlib.verifyQualifier( \
-	    qualifier, annotTypeKey, 0, lineNum, errorFile)
+	evidenceKey = vocabloadlib.verifyEvidence(evidence, annotTypeKey, lineNum, errorFile)
+	qualifierKey = vocabloadlib.verifyQualifier(qualifier, annotTypeKey, 0, lineNum, errorFile)
 	editorKey = loadlib.verifyUser(editor, lineNum, errorFile)
 	
 	# if any verification failed, this is an error
 	if termKey == 0 or markerKey == 0 or \
-	    referenceKey == 0 or \
-	    evidenceKey == 0 or \
-	    qualifierKey == 0 or \
-	    editorKey == 0:
+	   referenceKey == 0 or \
+	   evidenceKey == 0 or \
+	   qualifierKey == 0 or \
+	   editorKey == 0:
 
 	    continue
 
@@ -1249,7 +1245,6 @@ def bcpFiles():
     db.commit()
 
     bcpCommand = os.environ['PG_DBUTILS'] + '/bin/bcpin.csh'
-
     currentDir = os.getcwd()
 
     bcpAnnotCmd = '%s %s %s %s %s %s "\\t" "\\n" mgd' % \
@@ -1277,8 +1272,6 @@ def bcpFiles():
         currentDir, propertyFileName)
     diagFile.write('%s\n' % bcpPropertyCmd)
 
-
-
     print ('BCPing files')
     os.system(bcpAnnotCmd)
     os.system(bcpEvidenceCmd)
@@ -1287,10 +1280,9 @@ def bcpFiles():
     os.system(bcpPropertyCmd)
     print ('BCP done')
 
-
     # for GO/GAF annotations only...
     if isGO or isGOAmouse or isGOAhuman:
-        execSQL = 'select * from VOC_deleteGOGAFRed(\'%s\')' % (delByUser)
+        execSQL = '''select * from VOC_deleteGOGAFRed('%s')''' % (delByUser)
         print execSQL
         db.sql(execSQL, None)
 	db.commit()
@@ -1301,7 +1293,7 @@ def bcpFiles():
         # add header terms by annotation type
         # update allele transmission by J:
         # add 'Used-FC' reference by J:
-        execSQL = 'select * from ALL_postMP( %s, %s, \'%s\')' % (annotTypeKey, delByReferenceKey, delByUser)
+        execSQL = '''select * from ALL_postMP(%s, %s, '%s')''' % (annotTypeKey, delByReferenceKey, delByUser)
         print execSQL
         db.sql(execSQL, None)
 	db.commit()
