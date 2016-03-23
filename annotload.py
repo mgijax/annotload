@@ -32,11 +32,11 @@
 #       field 2: ID of MGI Object being Annotated (ex. MGI ID)
 #       field 3: J: (J:#####)
 #       field 4: Evidence Code Abbreviation (max length 5)
-#       field 5: Inferred From (max length 255)
-#       field 6: Qualifier (max length 255)
+#       field 5: Inferred From 
+#       field 6: Qualifier 
 #       field 7: Editor (max length 30)
 #       field 8: Date (MM/DD/YYYY)
-#       field 9: Notes (max length 255)
+#       field 9: Notes 
 #
 #       field 10: Logical DB Name of Object (field 2),
 #               being Annotated (default is MGI); optional
@@ -929,7 +929,7 @@ def createEvidenceRecord(newAnnotKey, evidenceKey, referenceKey, \
     # storing data in MGI_Note/MGI_NoteChunk
     #
     # note that the MGI_NoteChunk is now a 'text' field
-    # so the notes no longer need to be split into chunks of 255
+    # so the notes no longer need to be split into chunks
     # therefore, the sequenceNum for any new notes will always = 1
     # see TR12083
     #
