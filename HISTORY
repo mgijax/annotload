@@ -1,3 +1,4 @@
+TAG: annotload-6-0-3-2
 TAG: annotload-6-0-3-1
 DATE: 03/23/2016
 STAFF: lec 
@@ -8,7 +9,7 @@ DATE: 12/09/2015
 STAFF: lec
 CHANGES: 
 1) TR12070/12011/postgres/isMP cleanup due to running htmpload/impc
-2) removed 255 chunking of mgi_notechunk table
+2) removed chunking of mgi_notechunk table
 
 TAG: annotload-6-0-0-1
 DATE: 7/23/15
