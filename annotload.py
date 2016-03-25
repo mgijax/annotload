@@ -308,6 +308,9 @@ isDiseaseMarker = 0
 # true (1) if this is an MP/marker rollup load
 isMPMarker = 0
 
+# true (1) if this is an OMIM/HPO load
+isOMIMHPO = 0
+
 # true (1) if no bcp files to load
 skipBCP = 1
 
@@ -359,7 +362,7 @@ def init():
     global annotTypeKey, annotKey, annotTypeName, evidencePrimaryKey
     global noteKey, propertyKey
     global isMCV, isMP, isGO, isGOAmouse, isGOAhuman, isGOrat
-    global isDiseaseMarker, isMPMarker
+    global isDiseaseMarker, isMPMarker, isOMIMHPO
     global loadType
 
     db.useOneConnection(1)
@@ -410,6 +413,9 @@ def init():
 	
 	elif loadType == 'mpMarker':
 	    isMPMarker = 1
+	elif loadType == 'omimhpo':
+	    print 'isOMIMHPO'
+	    isOMIMHPO = 1
 	
     try:
 	inputFile = open(inputFileName, 'r')
@@ -738,7 +744,7 @@ def loadDictionaries():
     #	nothing
     '''
 
-    global termDict, annotDict, evidenceDict, objectDict, pTermDict
+    global termDict, annotDict, evidenceDict, pTermDict
 
     # cache annotation type vocabulary
 
@@ -797,7 +803,10 @@ def loadDictionaries():
 	value = r['_Annot_key']
 	evidenceDict[key] = value
 
+def loadObjectDict():
+    global objectDict
     # cache object keys
+    print 'ldb: %s, annotType: %s' % (logicalDBKey, annotTypeKey)
 
     results = db.sql('''select a.accID, a._Object_key
 	from ACC_Accession a, VOC_AnnotType t
@@ -902,7 +911,7 @@ def createEvidenceRecord(newAnnotKey, evidenceKey, referenceKey, \
     # 	goahumanload is delete/reload, so this detects only dups in the input file
     #
 
-    if isMP:
+    if isMP or isOMIMHPO:
             eKey = '%s:%s:%s:%s' % (newAnnotKey, evidenceKey, referenceKey, properties)
     elif isMPMarker:
 	    eKey = '%s:%s:%s:%s:%s' % (newAnnotKey, evidenceKey, referenceKey, properties, notes)
@@ -1039,7 +1048,6 @@ def processMcvFile():
 		col10 = accessionlib.get_LogicalDB_key(tokens[9])
 		if col10 != None:
 		    logicalDBKey = col10
-
 	    if len(tokens) > 10:
 		# field 11 reserved for optional properties
 		properties = string.strip(tokens[10])
@@ -1136,7 +1144,7 @@ def processFile():
     lineNum = 0
 
     # For each line in the input file
-
+    objectDictLoaded = 0
     for line in inputFile.readlines():
 
 	error = 0
@@ -1144,7 +1152,6 @@ def processFile():
 
 	# Split the line into tokens
 	tokens = string.splitfields(line[:-1], '\t')
-
 	try:
 	    termID = tokens[0]
 	    objectID = tokens[1]
@@ -1160,18 +1167,19 @@ def processFile():
 	    if len(tokens) > 9:
 		# field  10 reserved for optional ldb
 		# the default is "1" (MGI)
-		col10 = accessionlib.get_LogicalDB_key(tokens[9])
-
+	  	print tokens[9]
+		col10 = accessionlib.get_LogicalDB_key(string.strip(tokens[9]))
+		print col10
 		if col10 != None:
 		    logicalDBKey = col10
-
 		if len(tokens) > 10:
 		    # field 11 reserved for optional properties
 		    properties = string.strip(tokens[10])
-
 	except:
 	    exit(1, 'Invalid Line (%d): %s\n' % (lineNum, line))
-
+	if objectDictLoaded == 0:
+	    loadObjectDict()
+	    objectDictLoaded = 1
 	termKey = verifyTerm(termID, lineNum)
 	objectKey = verifyObject(objectID, logicalDBKey, lineNum)
 	referenceKey = loadlib.verifyReference(jnum, lineNum, errorFile)
