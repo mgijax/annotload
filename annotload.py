@@ -388,7 +388,7 @@ def init():
     if len(sys.argv) == 2:
 
 	loadType = sys.argv[1]
-	#print 'LOAD TYPE: %s' % sys.argv[1]
+	print 'LOAD TYPE: %s' % sys.argv[1]
 
 	if loadType == 'mcv':
 	    isMCV = 1
@@ -1167,9 +1167,9 @@ def processFile():
 	    if len(tokens) > 9:
 		# field  10 reserved for optional ldb
 		# the default is "1" (MGI)
-	  	print tokens[9]
+	  	#print tokens[9]
 		col10 = accessionlib.get_LogicalDB_key(string.strip(tokens[9]))
-		print col10
+		#print col10
 		if col10 != None:
 		    logicalDBKey = col10
 		if len(tokens) > 10:
@@ -1177,6 +1177,7 @@ def processFile():
 		    properties = string.strip(tokens[10])
 	except:
 	    exit(1, 'Invalid Line (%d): %s\n' % (lineNum, line))
+	# for files that specify logicalDB - we won't know that value until we get the first term
 	if objectDictLoaded == 0:
 	    loadObjectDict()
 	    objectDictLoaded = 1
