@@ -1,3 +1,8 @@
+TAG: annotload-tr12267-1
+DATE: 06/14/2016
+STAFF: sc
+CHANGES: annotload.py Added recognitions of OMIM/HPO annotations
+
 TAG: annotload-6-0-3-2
 TAG: annotload-6-0-3-1
 DATE: 03/23/2016
