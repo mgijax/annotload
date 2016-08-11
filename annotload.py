@@ -933,31 +933,24 @@ def createEvidenceRecord(newAnnotKey, evidenceKey, referenceKey, \
     elif isDiseaseMarker or isMPMarker:
 	    eKey = '%s:%s:%s:%s:%s' % (newAnnotKey, evidenceKey, referenceKey, properties, inferredFrom )
 
-    elif isGOAmouse or isGOAhuman or isGOrat or isGOAmousenoctua:
+    elif isGOAmouse or isGOAhuman or isGOrat:
 	    eKey = '%s:%s:%s:%s:%s' % (newAnnotKey, evidenceKey, referenceKey, properties, inferredFrom )
 
-    #elif isGOAmousenoctua:
+    elif isGOAmousenoctua:
 
-	    # split properties and exclude those in the goExcludedProperties list
-	    # the excluded properties still need to be loaded
-	    # but are excluded from the duplication check
+	    # exclude the goExcludedProperties list from the duplicate check
+	    # note that *all* properties are still loaded
 
-#	    include_properties = []
+	    dupcheck_properties = []
 
-#	    print '####\n'
-#	    print properties
-#	    print '\n'
-#	    pSet = string.split(properties,'&==&')
-#	    for s in pSet:
-#	        pTerm = string.split(s,'&=&')
-#	        if pTerm not in goExcludedProperties:
-#		     # join them back
-#		     print s + '\n'
-#	             include_properties.append(s)
-#
-#	    print '&==&'.join(include_properties)
-#	    eKey = '%s:%s:%s:%s:%s' % (newAnnotKey, evidenceKey, referenceKey, \
-#	    	'&==&'.join(include_properties), inferredFrom )
+	    allProps = string.split(properties, '&==&')
+	    for p in allProps:
+		pTerm, pValue = string.split(p,'&=&')
+	        if pTerm not in goExcludedProperties:
+	             dupcheck_properties.append(pTerm + '&=&' + pValue)
+
+	    eKey = '%s:%s:%s:%s:%s' % (newAnnotKey, evidenceKey, referenceKey, \
+	    	'&==&'.join(dupcheck_properties), inferredFrom )
 
     else:
             eKey = '%s:%s:%s' % (newAnnotKey, evidenceKey, referenceKey)
