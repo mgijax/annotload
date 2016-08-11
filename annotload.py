@@ -298,6 +298,9 @@ isGO = 0
 # true (1) if this is a GOA Mouse load
 isGOAmouse = 0
 
+# true (1) if this is a GOA Mouse Noctua load
+isGOAmousenoctua = 0
+
 # true (1) if this is a GOA Human Load
 isGOAhuman = 0
 
@@ -367,7 +370,7 @@ def init():
     global noteFile, noteFileName, noteChunkFile, noteChunkFileName
     global annotTypeKey, annotKey, annotTypeName, evidencePrimaryKey
     global noteKey, propertyKey
-    global isMCV, isMP, isGO, isGOAmouse, isGOAhuman, isGOrat
+    global isMCV, isMP, isGO, isGOAmouse, isGOAmousenoctua, isGOAhuman, isGOrat
     global isDiseaseMarker, isMPMarker, isOMIMHPO
     global loadType
 
@@ -407,6 +410,9 @@ def init():
 
 	elif loadType == 'goamouse':
 	    isGOAmouse = 1
+
+	elif loadType == 'goamousenoctua':
+	    isGOAmousenoctua = 1
 
 	elif loadType == 'goahuman':
 	    isGOAhuman = 1
@@ -766,7 +772,7 @@ def loadDictionaries():
 
     if loadObsolete == '0':
 	# only load non-obsoleted terms
-	cmd = cmd + 'and tm.isObsolete = 0'
+	cmd = cmd + ' and tm.isObsolete = 0'
 
     results = db.sql(cmd, 'auto')
 
@@ -927,23 +933,31 @@ def createEvidenceRecord(newAnnotKey, evidenceKey, referenceKey, \
     elif isDiseaseMarker or isMPMarker:
 	    eKey = '%s:%s:%s:%s:%s' % (newAnnotKey, evidenceKey, referenceKey, properties, inferredFrom )
 
-    elif isGOAmouse or isGOAhuman or isGOrat:
+    elif isGOAmouse or isGOAhuman or isGOrat or isGOAmousenoctua:
+	    eKey = '%s:%s:%s:%s:%s' % (newAnnotKey, evidenceKey, referenceKey, properties, inferredFrom )
+
+    #elif isGOAmousenoctua:
 
 	    # split properties and exclude those in the goExcludedProperties list
 	    # the excluded properties still need to be loaded
 	    # but are excluded from the duplication check
 
-	    include_properties = []
+#	    include_properties = []
 
-	    pTerm, pValue = string.split(properties,'&=&')
-
-	    for p in pTerm:
-	       if p not in goExcludedProperties:
-		   # join them back
-	           include_properties.append(pTerm + '&=&' + pValue)
-
-	    eKey = '%s:%s:%s:%s:%s' % (newAnnotKey, evidenceKey, referenceKey, \
-	    	'&==&'.join(include_properties), inferredFrom )
+#	    print '####\n'
+#	    print properties
+#	    print '\n'
+#	    pSet = string.split(properties,'&==&')
+#	    for s in pSet:
+#	        pTerm = string.split(s,'&=&')
+#	        if pTerm not in goExcludedProperties:
+#		     # join them back
+#		     print s + '\n'
+#	             include_properties.append(s)
+#
+#	    print '&==&'.join(include_properties)
+#	    eKey = '%s:%s:%s:%s:%s' % (newAnnotKey, evidenceKey, referenceKey, \
+#	    	'&==&'.join(include_properties), inferredFrom )
 
     else:
             eKey = '%s:%s:%s' % (newAnnotKey, evidenceKey, referenceKey)
@@ -1319,7 +1333,7 @@ def bcpFiles():
     print ('BCP done')
 
     # for GO/GAF annotations only...
-    if isGO or isGOAmouse or isGOAhuman:
+    if isGO or isGOAmouse or isGOAhuman or isGOAmousenoctua:
         execSQL = '''select * from VOC_deleteGOGAFRed('%s')''' % (delByUser)
         print execSQL
         db.sql(execSQL, None)
