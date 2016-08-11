@@ -219,6 +219,8 @@ import accessionlib
 import mgi_utils
 import loadlib
 import vocabloadlib
+import reportlib
+import go_annot_extensions
 
 #db.setTrace(True)
 db.setAutoTranslate(False)
@@ -313,6 +315,10 @@ isOMIMHPO = 0
 
 # true (1) if no bcp files to load
 skipBCP = 1
+
+# properties to exclude from GO duplication check
+goExcludedProperties = go_annot_extensions._EXCLUDED_TERMS
+
 
 def exit(status, message = None):
     '''
@@ -413,6 +419,7 @@ def init():
 	
 	elif loadType == 'mpMarker':
 	    isMPMarker = 1
+
 	elif loadType == 'omimhpo':
 	    print 'isOMIMHPO'
 	    isOMIMHPO = 1
@@ -913,10 +920,31 @@ def createEvidenceRecord(newAnnotKey, evidenceKey, referenceKey, \
 
     if isMP or isOMIMHPO:
             eKey = '%s:%s:%s:%s' % (newAnnotKey, evidenceKey, referenceKey, properties)
+
     elif isMPMarker:
 	    eKey = '%s:%s:%s:%s:%s' % (newAnnotKey, evidenceKey, referenceKey, properties, notes)
-    elif isGOAmouse or isGOAhuman or isGOrat or isDiseaseMarker or isMPMarker:
+
+    elif isDiseaseMarker or isMPMarker:
 	    eKey = '%s:%s:%s:%s:%s' % (newAnnotKey, evidenceKey, referenceKey, properties, inferredFrom )
+
+    elif isGOAmouse or isGOAhuman or isGOrat:
+
+	    # split properties and exclude those in the goExcludedProperties list
+	    # the excluded properties still need to be loaded
+	    # but are excluded from the duplication check
+
+	    include_properties = []
+
+	    pTerm, pValue = string.split(properties,'&=&')
+
+	    for p in pTerm:
+	       if p not in goExcludedProperties:
+		   # join them back
+	           include_properties.append(pTerm + '&=&' + pValue)
+
+	    eKey = '%s:%s:%s:%s:%s' % (newAnnotKey, evidenceKey, referenceKey, \
+	    	'&==&'.join(include_properties), inferredFrom )
+
     else:
             eKey = '%s:%s:%s' % (newAnnotKey, evidenceKey, referenceKey)
 
@@ -978,6 +1006,7 @@ def createEvidenceRecord(newAnnotKey, evidenceKey, referenceKey, \
 
 	    for p in allProps:
 
+		#print properties
 		pTerm, pValue = string.split(p,'&=&')
 
 		if pTermDict.has_key(pTerm):
@@ -1312,6 +1341,7 @@ def bcpFiles():
 #
 
 print ('\nannotload.py - main() started')
+
 init()
 verifyAnnotType()
 verifyMode()
