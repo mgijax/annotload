@@ -299,7 +299,7 @@ isGO = 0
 isGOAmouse = 0
 
 # true (1) if this is a GOA Mouse Noctua load
-isGOAmousenoctua = 0
+isGOmousenoctua = 0
 
 # true (1) if this is a GOA Human Load
 isGOAhuman = 0
@@ -370,7 +370,7 @@ def init():
     global noteFile, noteFileName, noteChunkFile, noteChunkFileName
     global annotTypeKey, annotKey, annotTypeName, evidencePrimaryKey
     global noteKey, propertyKey
-    global isMCV, isMP, isGO, isGOAmouse, isGOAmousenoctua, isGOAhuman, isGOrat
+    global isMCV, isMP, isGO, isGOAmouse, isGOmousenoctua, isGOAhuman, isGOrat
     global isDiseaseMarker, isMPMarker, isOMIMHPO
     global loadType
 
@@ -411,8 +411,8 @@ def init():
 	elif loadType == 'goamouse':
 	    isGOAmouse = 1
 
-	elif loadType == 'goamousenoctua':
-	    isGOAmousenoctua = 1
+	elif loadType == 'gomousenoctua':
+	    isGOmousenoctua = 1
 
 	elif loadType == 'goahuman':
 	    isGOAhuman = 1
@@ -936,7 +936,7 @@ def createEvidenceRecord(newAnnotKey, evidenceKey, referenceKey, \
     elif isGOAmouse or isGOAhuman or isGOrat:
 	    eKey = '%s:%s:%s:%s:%s' % (newAnnotKey, evidenceKey, referenceKey, properties, inferredFrom )
 
-    elif isGOAmousenoctua:
+    elif isGOmousenoctua:
 
 	    # exclude the goExcludedProperties list from the duplicate check
 	    # note that *all* properties are still loaded
@@ -1326,7 +1326,7 @@ def bcpFiles():
     print ('BCP done')
 
     # for GO/GAF annotations only...
-    if isGO or isGOAmouse or isGOAhuman or isGOAmousenoctua:
+    if isGO or isGOAmouse or isGOAhuman or isGOmousenoctua:
         execSQL = '''select * from VOC_deleteGOGAFRed('%s')''' % (delByUser)
         print execSQL
         db.sql(execSQL, None)
