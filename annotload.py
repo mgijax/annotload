@@ -378,10 +378,6 @@ def init():
     db.set_sqlUser(user)
     db.set_sqlPasswordFromFile(passwordFileName)
 
-    #fdate = mgi_utils.date('%m%d%Y')	# current date
-    #diagFileName = tail + '.' + fdate + '.diagnostics'
-    #errorFileName = tail + '.' + fdate + '.error'
-
     head, tail = os.path.split(inputFileName) 
 
     diagFileName = tail + '.diagnostics'
@@ -657,9 +653,9 @@ def verifyTerm(termID, lineNum):
 	termKey = termDict[termID]
     else:
 	if loadObsolete == '0':
-	    errorFile.write('''Invalid or Obsolete Term (%d) %s\n''' % (lineNum, termID))
+	    errorFile.write('''Invalid or Obsolete Term (%d) %s\n\n''' % (lineNum, termID))
 	else:
-	    errorFile.write('Invalid Term (%d) %s\n' % (lineNum, termID))
+	    errorFile.write('Invalid Term (%d) %s\n\n' % (lineNum, termID))
 	termKey = 0
 
     return(termKey)
@@ -1025,7 +1021,7 @@ def createEvidenceRecord(newAnnotKey, evidenceKey, referenceKey, \
 		    seqnum = seqnum + 1
 		    propertyKey = propertyKey + 1
 		else:
-		    errorFile.write('Invalid Property:  %s\n' % (pTerm))
+		    errorFile.write('Invalid Property:  %s\n\n' % (pTerm))
 
 	    stanza = stanza + 1
 
