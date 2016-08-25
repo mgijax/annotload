@@ -321,7 +321,7 @@ skipBCP = 1
 
 # properties to exclude from GO duplication check
 goExcludedProperties = go_annot_extensions._EXCLUDED_TERMS
-
+goExcludedProperties.remove('gene product')
 
 def exit(status, message = None):
     '''
