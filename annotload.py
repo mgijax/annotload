@@ -320,6 +320,8 @@ isOMIMHPO = 0
 skipBCP = 1
 
 # properties to exclude from GO duplication check
+# 'gene product' must be included in the duplicate check
+# so it is removed from the exclude list
 goExcludedProperties = go_annot_extensions._EXCLUDED_TERMS
 goExcludedProperties.remove('gene product')
 
