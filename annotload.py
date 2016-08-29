@@ -325,6 +325,7 @@ skipBCP = 1
 # so it is removed from the exclude list
 goExcludedProperties = go_annot_extensions._EXCLUDED_TERMS
 goExcludedProperties.remove('gene product')
+goExcludedProperties.remove('evidence')
 
 def exit(status, message = None):
     '''
@@ -822,22 +823,8 @@ def loadDictionaries():
         and a._Annot_key = e._Annot_key
         and e._AnnotEvidence_key = p._AnnotEvidence_key
         and p._PropertyTerm_key = t._Term_key
-	and  t.term not in (
-        	'evidence',
-        	'anatomy',
-        	'cell type',
-        	'gene product',
-        	'modification',
-        	'target',
-        	'external ref',
-        	'text',
-        	'dual-taxon ID',
-        	'lego-model-id', 
-        	'contributor', 
-        	'individual', 
-        	'go_qualifier'
-        	)
-        ''' % (annotTypeKey)
+	and  t.term not in ('%s')
+        ''' % (annotTypeKey, "','".join(goExcludedProperties))
 
         results = db.sql(cmd, 'auto')
         for r in results:
@@ -1000,7 +987,6 @@ def createEvidenceRecord(newAnnotKey, evidenceKey, referenceKey, \
 	    eKey = '%s:%s:%s:%s:%s' % (newAnnotKey, evidenceKey, referenceKey, inferredFrom, \
 	    	'&==&'.join(dupcheck_properties))
 
-            #errorFile.write(eKey + '\n')
     else:
             eKey = '%s:%s:%s' % (newAnnotKey, evidenceKey, referenceKey)
 
@@ -1009,6 +995,7 @@ def createEvidenceRecord(newAnnotKey, evidenceKey, referenceKey, \
 
     if isGOmousenoctua:
         if eKey in propertyDict:
+	    #errorFile.write(eKey + '\n')
 	    errorFile.write('Duplicate evidence/property %d: %s\n' % (lineNum, line))
 	    return
         else:
