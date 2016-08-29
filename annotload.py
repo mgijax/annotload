@@ -280,6 +280,7 @@ referenceDict = {}	# dictionary of references for quick lookup
 annotDict = {}		# dictionary of annotation records for quick lookup
 evidenceDict = {}	# dictionary of evidence records for quick lookup
 pTermDict = {}		# dictionary of propery terms for quick lookup
+propertyDict = {}	# dictionary of property per evidence
 
 loaddate = loadlib.loaddate
 
@@ -755,7 +756,7 @@ def loadDictionaries():
     #	nothing
     '''
 
-    global termDict, annotDict, evidenceDict, pTermDict
+    global termDict, annotDict, evidenceDict, pTermDict, propertyDict
 
     # cache annotation type vocabulary
 
@@ -813,6 +814,40 @@ def loadDictionaries():
 	key = '%s:%s:%s' % (r['_Annot_key'], r['_EvidenceTerm_key'], r['_Refs_key'])
 	value = r['_Annot_key']
 	evidenceDict[key] = value
+
+    if isGOmousenoctua:
+	cmd = '''select e._Annot_key, e._EvidenceTerm_key, e._Refs_key, e.inferredFrom, t.term || '&=&' || p.value as property
+        from VOC_Evidence e, VOC_Annot a, VOC_Evidence_Property p, VOC_Term t
+        where a._AnnotType_key = %s
+        and a._Annot_key = e._Annot_key
+        and e._AnnotEvidence_key = p._AnnotEvidence_key
+        and p._PropertyTerm_key = t._Term_key
+	and  t.term not in (
+        	'evidence',
+        	'anatomy',
+        	'cell type',
+        	'gene product',
+        	'modification',
+        	'target',
+        	'external ref',
+        	'text',
+        	'dual-taxon ID',
+        	'lego-model-id', 
+        	'contributor', 
+        	'individual', 
+        	'go_qualifier'
+        	)
+        ''' % (annotTypeKey)
+
+        results = db.sql(cmd, 'auto')
+        for r in results:
+	    inferredFrom = r['inferredFrom']
+	    if inferredFrom == None:
+	        inferredFrom = ''
+	    key = '%s:%s:%s:%s:%s' % \
+	    	(r['_Annot_key'], r['_EvidenceTerm_key'], r['_Refs_key'], inferredFrom, r['property'])
+	    value = r['_Annot_key']
+	    propertyDict[key] = value
 
 def loadObjectDict():
     global objectDict
@@ -904,7 +939,7 @@ def createEvidenceRecord(newAnnotKey, evidenceKey, referenceKey, \
     #
     '''
 
-    global evidencePrimaryKey, evidenceDict, noteKey, propertyKey
+    global evidencePrimaryKey, evidenceDict, propertyDict, noteKey, propertyKey
 
     #
     # make sure this is not a duplicate evidence statement
@@ -922,6 +957,21 @@ def createEvidenceRecord(newAnnotKey, evidenceKey, referenceKey, \
     # 	goahumanload is delete/reload, so this detects only dups in the input file
     #
 
+    #
+    # NOTE:
+    #
+    # evidenceDict is used to check for duplicates:
+    #
+    #	1) existing annotation (in the database) : see loadDictionaries/evidenceDict)
+    #	(AnnotKey, evidenceKey, referenceKey)
+    #
+    #   2) new annotations (from the input file) : see loadDictionaries/propertyDict)
+    #	   may be added : 'properties', 'notes', 'inferredFrom'  
+    #
+    # propertyDict is used to check for duplicates from the database + input file using:
+    #   (AnnotKey, evidenceKey, referenceKey, inferredFrom, '&==&'.join(dupcheck_properties))
+    #
+
     if isMP or isOMIMHPO:
             eKey = '%s:%s:%s:%s' % (newAnnotKey, evidenceKey, referenceKey, properties)
 
@@ -929,10 +979,10 @@ def createEvidenceRecord(newAnnotKey, evidenceKey, referenceKey, \
 	    eKey = '%s:%s:%s:%s:%s' % (newAnnotKey, evidenceKey, referenceKey, properties, notes)
 
     elif isDiseaseMarker or isMPMarker:
-	    eKey = '%s:%s:%s:%s:%s' % (newAnnotKey, evidenceKey, referenceKey, properties, inferredFrom )
+	    eKey = '%s:%s:%s:%s:%s' % (newAnnotKey, evidenceKey, referenceKey, properties, inferredFrom)
 
     elif isGOAmouse or isGOAhuman or isGOrat:
-	    eKey = '%s:%s:%s:%s:%s' % (newAnnotKey, evidenceKey, referenceKey, properties, inferredFrom )
+	    eKey = '%s:%s:%s:%s:%s' % (newAnnotKey, evidenceKey, referenceKey, inferredFrom, properties)
 
     elif isGOmousenoctua:
 
@@ -947,22 +997,30 @@ def createEvidenceRecord(newAnnotKey, evidenceKey, referenceKey, \
 	        if pTerm not in goExcludedProperties:
 	             dupcheck_properties.append(pTerm + '&=&' + pValue)
 
-	    eKey = '%s:%s:%s:%s:%s' % (newAnnotKey, evidenceKey, referenceKey, \
-	    	'&==&'.join(dupcheck_properties), inferredFrom )
+	    eKey = '%s:%s:%s:%s:%s' % (newAnnotKey, evidenceKey, referenceKey, inferredFrom, \
+	    	'&==&'.join(dupcheck_properties))
 
+            #errorFile.write(eKey + '\n')
     else:
             eKey = '%s:%s:%s' % (newAnnotKey, evidenceKey, referenceKey)
 
     # evidence record may exist in our dictionary already
     # if so, it's a duplicate; let's report it
 
-    if evidenceDict.has_key(eKey):
+    if isGOmousenoctua:
+        if eKey in propertyDict:
+	    errorFile.write('Duplicate evidence/property %d: %s\n' % (lineNum, line))
+	    return
+        else:
+	    propertyDict[eKey] = eKey
+
+    elif evidenceDict.has_key(eKey):
 	    errorFile.write('Duplicate evidence %d: %s\n' % (lineNum, line))
 	    return
 
-    # not a duplicate
-
-    evidenceDict[eKey] = eKey
+    else:
+        # not a duplicate
+        evidenceDict[eKey] = eKey
 
     evidenceFile.write('%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
 	    % (evidencePrimaryKey, newAnnotKey, evidenceKey, referenceKey, \
@@ -1179,6 +1237,7 @@ def processFile():
 
     # For each line in the input file
     objectDictLoaded = 0
+
     for line in inputFile.readlines():
 
 	error = 0
@@ -1186,6 +1245,7 @@ def processFile():
 
 	# Split the line into tokens
 	tokens = string.splitfields(line[:-1], '\t')
+
 	try:
 	    termID = tokens[0]
 	    objectID = tokens[1]
@@ -1202,19 +1262,25 @@ def processFile():
 		# field  10 reserved for optional ldb
 		# the default is "1" (MGI)
 	  	#print tokens[9]
+
 		col10 = accessionlib.get_LogicalDB_key(string.strip(tokens[9]))
 		#print col10
+
 		if col10 != None:
 		    logicalDBKey = col10
+
 		if len(tokens) > 10:
 		    # field 11 reserved for optional properties
 		    properties = string.strip(tokens[10])
+
 	except:
 	    exit(1, 'Invalid Line (%d): %s\n' % (lineNum, line))
+
 	# for files that specify logicalDB - we won't know that value until we get the first term
 	if objectDictLoaded == 0:
 	    loadObjectDict()
 	    objectDictLoaded = 1
+
 	termKey = verifyTerm(termID, lineNum)
 	objectKey = verifyObject(objectID, logicalDBKey, lineNum)
 	referenceKey = loadlib.verifyReference(jnum, lineNum, errorFile)
