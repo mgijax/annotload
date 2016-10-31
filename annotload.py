@@ -534,7 +534,7 @@ def verifyMode():
 
     if delByReference != "J:0":
 
-        delByReferenceKey = loadlib.verifyReference(delByReference, 0, errorFile)
+        delByReferenceKey = verifyReference(delByReference, 0)
 
         if delByReferenceKey is None:
 	    exit(1, 'Invalid Reference: %s\n' % (delByReference))
@@ -664,6 +664,33 @@ def verifyTerm(termID, lineNum):
 
     return(termKey)
 
+def verifyReference(referenceID, lineNum):
+    '''
+    # requires:
+    #	referenceID - the Accession ID of the reference
+    #	lineNum - the line number of the record from the input file
+    #
+    # effects:
+    #	verifies that:
+    #		the Reference  exists 
+    #	writes to the error file if the Reference is invalid
+    #
+    # returns:
+    #	0 if the Term is invalid
+    #	Term Key if the Term is valid
+    #
+    '''
+
+    referenceKey = 0
+
+    if referenceDict.has_key(referenceID):
+	referenceKey = referenceDict[referenceID]
+    else:
+	errorFile.write('Invalid Reference (%d) %s\n\n' % (lineNum, referenceID))
+	referenceKey = 0
+
+    return(referenceKey)
+
 def verifyObject(objectID, logicalDBKey, lineNum):
     '''
     # requires:
@@ -757,7 +784,7 @@ def loadDictionaries():
     #	nothing
     '''
 
-    global termDict, annotDict, evidenceDict, pTermDict, propertyDict
+    global termDict, referenceDict, annotDict, evidenceDict, pTermDict, propertyDict
 
     # cache annotation type vocabulary
 
@@ -778,6 +805,20 @@ def loadDictionaries():
 
     for r in results:
 	termDict[r['accID']] = r['_Object_key']
+
+    #   
+    # referenceDict
+    #   
+    results = db.sql('''
+       select distinct e._Refs_key, a.accID
+       from VOC_Evidence e, ACC_Accession a
+       where e._Refs_key = a._Object_key
+       and a._MGIType_key = 1 
+       and a._LogicalDB_key = 1 
+       and a.prefixPart = 'J:'
+       ''', 'auto')
+    for r in results:
+	referenceDict[r['accID']] = r['_Refs_key']
 
     # cache property vocabulary(s)
 
@@ -1174,7 +1215,7 @@ def processMcvFile():
 	# if we get here, continue verifying
 	termKey = verifyTerm(termID, lineNum)
 	markerKey = verifyObject(mgiID, logicalDBKey, lineNum)
-	referenceKey = loadlib.verifyReference(jnum, lineNum, errorFile)
+	referenceKey = verifyReference(jnum, lineNum)
 	evidenceKey = vocabloadlib.verifyEvidence(evidence, annotTypeKey, lineNum, errorFile)
 	qualifierKey = vocabloadlib.verifyQualifier(qualifier, annotTypeKey, 0, lineNum, errorFile)
 	editorKey = loadlib.verifyUser(editor, lineNum, errorFile)
@@ -1289,7 +1330,7 @@ def processFile():
 
 	termKey = verifyTerm(termID, lineNum)
 	objectKey = verifyObject(objectID, logicalDBKey, lineNum)
-	referenceKey = loadlib.verifyReference(jnum, lineNum, errorFile)
+	referenceKey = verifyReference(jnum, lineNum)
 	evidenceKey = vocabloadlib.verifyEvidence(evidence, annotTypeKey, lineNum, errorFile)
 	qualifierKey = vocabloadlib.verifyQualifier(qualifier, annotTypeKey, 0, lineNum, errorFile)
 	editorKey = loadlib.verifyUser(editor, lineNum, errorFile)
