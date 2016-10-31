@@ -810,11 +810,11 @@ def loadDictionaries():
     # referenceDict
     #   
     results = db.sql('''
-       select a._Object_key, a.accID
-       from ACC_Accession a
-       where a._MGIType_key = 1 
-       and a._LogicalDB_key = 1 
-       and a.prefixPart = 'J:'
+       select _Object_key, accID
+       from ACC_Accession
+       where _MGIType_key = 1 
+       and _LogicalDB_key = 1 
+       and prefixPart = 'J:'
        ''', 'auto')
     for r in results:
 	referenceDict[r['accID']] = r['_Object_key']
