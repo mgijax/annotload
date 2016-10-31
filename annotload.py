@@ -810,15 +810,14 @@ def loadDictionaries():
     # referenceDict
     #   
     results = db.sql('''
-       select distinct e._Refs_key, a.accID
-       from VOC_Evidence e, ACC_Accession a
-       where e._Refs_key = a._Object_key
-       and a._MGIType_key = 1 
+       select a._Object_key, a.accID
+       from ACC_Accession a
+       where a._MGIType_key = 1 
        and a._LogicalDB_key = 1 
        and a.prefixPart = 'J:'
        ''', 'auto')
     for r in results:
-	referenceDict[r['accID']] = r['_Refs_key']
+	referenceDict[r['accID']] = r['_Object_key']
 
     # cache property vocabulary(s)
 
