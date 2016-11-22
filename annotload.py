@@ -230,8 +230,8 @@ db.setAutoTranslateBE(False)
 
 # from configuration file
 
-user = os.environ['MGD_DBUSER']
-passwordFileName = os.environ['MGD_DBPASSWORDFILE']
+user = os.environ['PG_DBUSER']
+passwordFileName = os.environ['PG_DBPASSWORDFILE']
 mode = os.environ['ANNOTMODE']
 inputFileName = os.environ['ANNOTINPUTFILE']
 annotTypeName = os.environ['ANNOTTYPENAME']
