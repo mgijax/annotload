@@ -231,7 +231,7 @@ db.setAutoTranslateBE(False)
 # from configuration file
 
 user = os.environ['PG_DBUSER']
-passwordFileName = os.environ['PG_DBPASSWORDFILE']
+passwordFileName = os.environ['PG_1LINE_PASSFILE']
 mode = os.environ['ANNOTMODE']
 inputFileName = os.environ['ANNOTINPUTFILE']
 annotTypeName = os.environ['ANNOTTYPENAME']
