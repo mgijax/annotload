@@ -545,7 +545,7 @@ def verifyMode():
 
 	if delByReference != "J:0":
 
-            print ('\nannotload.py - verifyMode - delByReference: %s, %s' % (delByReference, delByReferenceKey))
+            #print ('\nannotload.py - verifyMode - delByReference: %s, %s' % (delByReference, delByReferenceKey))
 
 	    db.sql('''create temp table toDelete as 
 	        select e._Annot_key, e._AnnotEvidence_key 
@@ -1461,18 +1461,22 @@ def bcpFiles():
 
 print ('\nannotload.py - main() started')
 
-print ('\nannotload.py - init')
+#print ('\nannotload.py - init')
 init()
-print ('\nannotload.py - loadDictionary')
-loadDictionaries()
-print ('\nannotload.py - verfifyAnnot')
+
+#print ('\nannotload.py - verifyAnnotType')
 verifyAnnotType()
-print ('\nannotload.py - verifyMode')
+
+#print ('\nannotload.py - loadDictionary')
+loadDictionaries()
+
+#print ('\nannotload.py - verifyMode')
 verifyMode()
-print ('\nannotload.py - setPrimaryKeys')
+
+#print ('\nannotload.py - setPrimaryKeys')
 setPrimaryKeys()
 
-print ('\nannotload.py - process')
+#print ('\nannotload.py - process')
 if isMCV:
     processMcvFile()
 else:
