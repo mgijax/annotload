@@ -775,6 +775,32 @@ def setPrimaryKeys():
     else:
 	propertyKey = results[0]['maxKey']
 
+def loadReferenceDictionary():
+    '''
+    # requires:
+    #
+    # effects:
+    #	loads global dictionaries (see global below) for quicker lookup
+    #
+    # returns:
+    #	nothing
+    '''
+
+    global referenceDict
+
+    #   
+    # referenceDict
+    #   
+    results = db.sql('''
+       select _Object_key, accID
+       from ACC_Accession
+       where _MGIType_key = 1 
+       and _LogicalDB_key = 1 
+       and prefixPart = 'J:'
+       ''', 'auto')
+    for r in results:
+	referenceDict[r['accID']] = r['_Object_key']
+
 def loadDictionaries():
     '''
     # requires:
@@ -786,7 +812,7 @@ def loadDictionaries():
     #	nothing
     '''
 
-    global termDict, referenceDict, annotDict, evidenceDict, pTermDict, propertyDict
+    global termDict, annotDict, evidenceDict, pTermDict, propertyDict
 
     # cache annotation type vocabulary
 
@@ -807,19 +833,6 @@ def loadDictionaries():
 
     for r in results:
 	termDict[r['accID']] = r['_Object_key']
-
-    #   
-    # referenceDict
-    #   
-    results = db.sql('''
-       select _Object_key, accID
-       from ACC_Accession
-       where _MGIType_key = 1 
-       and _LogicalDB_key = 1 
-       and prefixPart = 'J:'
-       ''', 'auto')
-    for r in results:
-	referenceDict[r['accID']] = r['_Object_key']
 
     # cache property vocabulary(s)
 
@@ -1461,22 +1474,25 @@ def bcpFiles():
 
 print ('\nannotload.py - main() started')
 
-#print ('\nannotload.py - init')
+print ('\nannotload.py - init')
 init()
 
-#print ('\nannotload.py - verifyAnnotType')
+print ('\nannotload.py - verifyAnnotType')
 verifyAnnotType()
 
-#print ('\nannotload.py - loadDictionary')
-loadDictionaries()
+print ('\nannotload.py - loadReferenceDictionary')
+loadReferenceDictionary()
 
-#print ('\nannotload.py - verifyMode')
+print ('\nannotload.py - verifyMode')
 verifyMode()
 
-#print ('\nannotload.py - setPrimaryKeys')
+print ('\nannotload.py - setPrimaryKeys')
 setPrimaryKeys()
 
-#print ('\nannotload.py - process')
+print ('\nannotload.py - loadDictionary')
+loadDictionaries()
+
+print ('\nannotload.py - process')
 if isMCV:
     processMcvFile()
 else:
