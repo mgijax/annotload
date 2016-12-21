@@ -2,6 +2,7 @@ TAG: annotload-6-0-8-?
 DATE: 10/31/2016
 STAFF: lec
 CHANGES: TR12427/Disease Ontology (DO)
+obsolete: remove db.setAutoTranslate
 
 TAG: annotload-6-0-6-1
 DATE: 09/08/2016

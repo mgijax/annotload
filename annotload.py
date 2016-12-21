@@ -223,8 +223,6 @@ import reportlib
 import go_annot_extensions
 
 #db.setTrace(True)
-db.setAutoTranslate(False)
-db.setAutoTranslateBE(False)
 
 # globals
 
@@ -1474,25 +1472,25 @@ def bcpFiles():
 
 print ('\nannotload.py - main() started')
 
-print ('\nannotload.py - init')
+#print ('\nannotload.py - init')
 init()
 
-print ('\nannotload.py - verifyAnnotType')
+#print ('\nannotload.py - verifyAnnotType')
 verifyAnnotType()
 
-print ('\nannotload.py - loadReferenceDictionary')
+#print ('\nannotload.py - loadReferenceDictionary')
 loadReferenceDictionary()
 
-print ('\nannotload.py - verifyMode')
+#print ('\nannotload.py - verifyMode')
 verifyMode()
 
-print ('\nannotload.py - setPrimaryKeys')
+#print ('\nannotload.py - setPrimaryKeys')
 setPrimaryKeys()
 
-print ('\nannotload.py - loadDictionary')
+#print ('\nannotload.py - loadDictionary')
 loadDictionaries()
 
-print ('\nannotload.py - process')
+#print ('\nannotload.py - process')
 if isMCV:
     processMcvFile()
 else:
