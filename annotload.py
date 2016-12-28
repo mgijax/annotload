@@ -532,7 +532,7 @@ def verifyMode():
 
     if delByReference != "J:0":
 
-        delByReferenceKey = verifyReference(delByReference, 0)
+        delByReferenceKey = verifyReference(delByReference, 0, '')
 
         if delByReferenceKey is None:
 	    exit(1, 'Invalid Reference: %s\n' % (delByReference))
@@ -632,11 +632,12 @@ def verifyMode():
     if mode == 'delete':
 	exit(0)
 
-def verifyTerm(termID, lineNum):
+def verifyTerm(termID, lineNum, line):
     '''
     # requires:
     #	termID - the Accession ID of the term
     #	lineNum - the line number of the record from the input file
+    #   line = the line itself
     #
     # effects:
     #	verifies that:
@@ -657,18 +658,19 @@ def verifyTerm(termID, lineNum):
 	termKey = termDict[termID]
     else:
 	if loadObsolete == '0':
-	    errorFile.write('''Invalid or Obsolete Term (%d) %s\n\n''' % (lineNum, termID))
+	    errorFile.write('Invalid or Obsolete Term (%d): %s\n%s\n' % (lineNum, termID, line))
 	else:
-	    errorFile.write('Invalid Term (%d) %s\n\n' % (lineNum, termID))
+	    errorFile.write('Invalid Term (%d): %s\n%s\n' % (lineNum, termID, line))
 	termKey = 0
 
     return(termKey)
 
-def verifyReference(referenceID, lineNum):
+def verifyReference(referenceID, lineNum, line):
     '''
     # requires:
     #	referenceID - the Accession ID of the reference
     #	lineNum - the line number of the record from the input file
+    #   line = the line itself
     #
     # effects:
     #	verifies that:
@@ -686,17 +688,18 @@ def verifyReference(referenceID, lineNum):
     if referenceDict.has_key(referenceID):
 	referenceKey = referenceDict[referenceID]
     else:
-	errorFile.write('Invalid Reference (%d) %s\n\n' % (lineNum, referenceID))
+	errorFile.write('Invalid Reference (%d): %s\n%s\n' % (lineNum, referenceID, line))
 	referenceKey = 0
 
     return(referenceKey)
 
-def verifyObject(objectID, logicalDBKey, lineNum):
+def verifyObject(objectID, logicalDBKey, lineNum, line):
     '''
     # requires:
     #	objectID - the ID of the Object
     #	logicalDBKey - the logical DB of the objectID
     #	lineNum - the line number of the record from the input file
+    #   line = the line itself
     #
     # effects:
     #	verifies that the Object exists and is of the appropriate type
@@ -730,7 +733,7 @@ def verifyObject(objectID, logicalDBKey, lineNum):
 	    objectKey = results[0]['_Object_key']
 	    objectDict[objectID] = objectKey
 	else:
-	    errorFile.write('Invalid Object (%d) %s\n' % (lineNum, objectID))
+	    errorFile.write('Invalid Object (%d): %s\n%s\n' % (lineNum, objectID, line))
 	    objectKey = 0
 
     return(objectKey)
@@ -1068,13 +1071,13 @@ def createEvidenceRecord(newAnnotKey, evidenceKey, referenceKey, \
     if isGOmousenoctua:
         if eKey in propertyDict:
 	    #errorFile.write(eKey + '\n')
-	    errorFile.write('Duplicate evidence/property %d: %s\n' % (lineNum, line))
+	    errorFile.write('Duplicate evidence/property (%d): \n%s\n' % (lineNum, line))
 	    return
         else:
 	    propertyDict[eKey] = eKey
 
     elif evidenceDict.has_key(eKey):
-	    errorFile.write('Duplicate evidence %d: %s\n' % (lineNum, line))
+	    errorFile.write('Duplicate evidence (%d): \n%s\n' % (lineNum, line))
 	    return
 
     else:
@@ -1140,7 +1143,7 @@ def createEvidenceRecord(newAnnotKey, evidenceKey, referenceKey, \
 		    seqnum = seqnum + 1
 		    propertyKey = propertyKey + 1
 		else:
-		    errorFile.write('Invalid Property:  %s\n\n' % (pTerm))
+	            errorFile.write('Invalid Property (%s):  %s\n%s\n' % (lineNum, pTerm, line))
 
 	    stanza = stanza + 1
 
@@ -1204,13 +1207,13 @@ def processMcvFile():
 		properties = string.strip(tokens[10])
 
 	except:
-	    exit(1, 'Invalid Line (%d): %s\n' % (lineNum, line))
+	    exit(1, 'Invalid Line (%d): \n%s\n' % (lineNum, line))
 
 	# if we just have an MGI ID delete all annotations and continue
 	if termID == '' and jnum == '' and evidence == '' and \
 	   qualifier == '' and editor == '':
 
-	    markerKey = verifyObject(mgiID, logicalDBKey, lineNum)
+	    markerKey = verifyObject(mgiID, logicalDBKey, lineNum, line)
 
 	    if markerKey == 0: # not valid
 		# skip this record, verifyObject logs to discrepancy file
@@ -1225,9 +1228,9 @@ def processMcvFile():
 		continue
 
 	# if we get here, continue verifying
-	termKey = verifyTerm(termID, lineNum)
-	markerKey = verifyObject(mgiID, logicalDBKey, lineNum)
-	referenceKey = verifyReference(jnum, lineNum)
+	termKey = verifyTerm(termID, lineNum, line)
+	markerKey = verifyObject(mgiID, logicalDBKey, lineNum, line)
+	referenceKey = verifyReference(jnum, lineNum, line)
 	evidenceKey = vocabloadlib.verifyEvidence(evidence, annotTypeKey, lineNum, errorFile)
 	qualifierKey = vocabloadlib.verifyQualifier(qualifier, annotTypeKey, 0, lineNum, errorFile)
 	editorKey = loadlib.verifyUser(editor, lineNum, errorFile)
@@ -1333,16 +1336,16 @@ def processFile():
 		    properties = string.strip(tokens[10])
 
 	except:
-	    exit(1, 'Invalid Line (%d): %s\n' % (lineNum, line))
+	    exit(1, 'Invalid Line (%d): \n%s\n' % (lineNum, line))
 
 	# for files that specify logicalDB - we won't know that value until we get the first term
 	if objectDictLoaded == 0:
 	    loadObjectDict()
 	    objectDictLoaded = 1
 
-	termKey = verifyTerm(termID, lineNum)
-	objectKey = verifyObject(objectID, logicalDBKey, lineNum)
-	referenceKey = verifyReference(jnum, lineNum)
+	termKey = verifyTerm(termID, lineNum, line)
+	objectKey = verifyObject(objectID, logicalDBKey, lineNum, line)
+	referenceKey = verifyReference(jnum, lineNum, line)
 	evidenceKey = vocabloadlib.verifyEvidence(evidence, annotTypeKey, lineNum, errorFile)
 	qualifierKey = vocabloadlib.verifyQualifier(qualifier, annotTypeKey, 0, lineNum, errorFile)
 	editorKey = loadlib.verifyUser(editor, lineNum, errorFile)
