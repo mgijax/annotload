@@ -1,5 +1,5 @@
-TAG: annotload-6-0-8-?
-DATE: 10/31/2016
+TAG: annotload-6-0-8-1
+DATE: 10/31/2016, 02/14/2017
 STAFF: lec
 CHANGES: TR12427/Disease Ontology (DO)
 obsolete: remove db.setAutoTranslate
