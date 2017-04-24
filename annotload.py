@@ -145,6 +145,9 @@
 #
 # History:
 #
+# sc	04/24/2017
+#	- TR12556 - remove call to ALL_postMP
+#
 # lec	12/8/2015
 #	- TR12070/12011/fix for postgres/isMP
 #
@@ -1454,17 +1457,6 @@ def bcpFiles():
     # for GO/GAF annotations only...
     if isGO or isGOAmouse or isGOAhuman or isGOmousenoctua:
         execSQL = '''select * from VOC_deleteGOGAFRed('%s')''' % (delByUser)
-        print execSQL
-        db.sql(execSQL, None)
-	db.commit()
-
-    # for MP annotations only: process header terms
-    if isMP:
-        # post-MP stuff
-        # add header terms by annotation type
-        # update allele transmission by J:
-        # add 'Used-FC' reference by J:
-        execSQL = '''select * from ALL_postMP(%s, %s, '%s')''' % (annotTypeKey, delByReferenceKey, delByUser)
         print execSQL
         db.sql(execSQL, None)
 	db.commit()
