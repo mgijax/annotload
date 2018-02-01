@@ -1454,6 +1454,12 @@ def bcpFiles():
     os.system(bcpPropertyCmd)
     print ('BCP done')
 
+    # update voc_evidence_seq auto-sequence
+    execSQL = ''' select setval('voc_evidence_seq', (select max(_AnnotEvidence_key) + 1 from VOC_Evidence)) '''
+    print execSQL
+    db.sql(execSQL, None)
+    db.commit()
+
     # for GO/GAF annotations only...
     if isGO or isGOAmouse or isGOAhuman or isGOmousenoctua:
         execSQL = '''select * from VOC_deleteGOGAFRed('%s')''' % (delByUser)
