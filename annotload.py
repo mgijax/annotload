@@ -761,7 +761,7 @@ def setPrimaryKeys():
     else:
 	annotKey = results[0]['maxKey']
 
-    results = db.sql('select nextval('voc_evidence_seq')', 'auto')
+    results = db.sql('select nextval('voc_evidence_seq') as maxKey', 'auto')
     if results[0]['maxKey'] is None:
 	evidencePrimaryKey = 1000
     else:
