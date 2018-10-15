@@ -1176,8 +1176,7 @@ def processMcvFile():
 
     #  we first delete all annotations by marker, 
     # then recreate based on the input
-    deleteSQL = '''delete from VOC_Annot 
-	    where _AnnotType_key = 1011 and _Object_key = %s'''
+    deleteSQL = '''delete from VOC_Annot where _AnnotType_key = %s and _Object_key = %s'''
     lineNum = 0
 
     # For each line in the input file
@@ -1226,8 +1225,8 @@ def processMcvFile():
 		# delete existing annotations for this marker/annotation type
 		# and go on to next record
 		print 'delete only mode, deleting all annotations for %s' % markerKey
-		#print deleteSQL % markerKey
-		db.sql(deleteSQL % markerKey, None)
+		print deleteSQL % (annotTypeKey, markerKey)
+		db.sql(deleteSQL % (annotTypeKey, markerKey), None)
 		continue
 
 	# if we get here, continue verifying
@@ -1255,7 +1254,7 @@ def processMcvFile():
 
 	# first delete if we haven't already seen this marker in the input
 	if not markerKey in mkrKeyList:
-	    db.sql(deleteSQL % markerKey, None)
+	    db.sql(deleteSQL % (annotTypeKey, markerKey), None)
 	    mkrKeyList.append(markerKey)
 
 	# then create annotations
