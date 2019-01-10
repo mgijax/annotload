@@ -755,17 +755,9 @@ def setPrimaryKeys():
 
     global annotKey, evidencePrimaryKey, noteKey, propertyKey
 
-    results = db.sql('select max(_Annot_key) + 1 as maxKey from VOC_Annot', 'auto')
-    if results[0]['maxKey'] is None:
-	annotKey = 1000
-    else:
-	annotKey = results[0]['maxKey']
+    results = db.sql(''' select nextval('voc_annot_seg') as maxKey ''', 'auto')
 
     results = db.sql(''' select nextval('voc_evidence_seq') as maxKey ''', 'auto')
-    if results[0]['maxKey'] is None:
-	evidencePrimaryKey = 1000
-    else:
-	evidencePrimaryKey = results[0]['maxKey']
 
     results = db.sql('select max(_Note_key) + 1 as maxKey from MGI_Note', 'auto')
     if results[0]['maxKey'] is None:
@@ -1452,6 +1444,12 @@ def bcpFiles():
     os.system(bcpNoteChunkCmd)
     os.system(bcpPropertyCmd)
     print ('BCP done')
+
+    # update voc_annot_seq auto-sequence
+    execSQL = '''select setval('voc_annot_seq', (select max(_Annot_key) from VOC_Annot))'''
+    print execSQL
+    db.sql(execSQL, None)
+    db.commit()
 
     # update voc_evidence_seq auto-sequence
     execSQL = '''select setval('voc_evidence_seq', (select max(_AnnotEvidence_key) from VOC_Evidence))'''
