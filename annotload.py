@@ -755,7 +755,7 @@ def setPrimaryKeys():
 
     global annotKey, evidencePrimaryKey, noteKey, propertyKey
 
-    results = db.sql(''' select nextval('voc_annot_seg') as maxKey ''', 'auto')
+    results = db.sql(''' select nextval('voc_annot_seq') as maxKey ''', 'auto')
 
     results = db.sql(''' select nextval('voc_evidence_seq') as maxKey ''', 'auto')
 
