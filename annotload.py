@@ -756,20 +756,16 @@ def setPrimaryKeys():
     global annotKey, evidencePrimaryKey, noteKey, propertyKey
 
     results = db.sql(''' select nextval('voc_annot_seq') as maxKey ''', 'auto')
+    annotKey = results[0]['maxKey']
 
     results = db.sql(''' select nextval('voc_evidence_seq') as maxKey ''', 'auto')
+    evidencePrimaryKey = results[0]['maxKey']
 
     results = db.sql('select max(_Note_key) + 1 as maxKey from MGI_Note', 'auto')
-    if results[0]['maxKey'] is None:
-	noteKey = 1000
-    else:
-	noteKey = results[0]['maxKey']
+    noteKey = results[0]['maxKey']
 
     results = db.sql('''select max(_EvidenceProperty_key) + 1 as maxKey from VOC_Evidence_Property''', 'auto')
-    if results[0]['maxKey'] is None:
-	propertyKey = 1000
-    else:
-	propertyKey = results[0]['maxKey']
+    propertyKey = results[0]['maxKey']
 
 def loadReferenceDictionary():
     '''
