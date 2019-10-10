@@ -764,7 +764,7 @@ def setPrimaryKeys():
     results = db.sql('select max(_Note_key) + 1 as maxKey from MGI_Note', 'auto')
     noteKey = results[0]['maxKey']
 
-    results = db.sql('''select max(_EvidenceProperty_key) + 1 as maxKey from VOC_Evidence_Property''', 'auto')
+    results = db.sql(''' select nextval('voc_evidence_property_seq') as maxKey ''', 'auto')
     propertyKey = results[0]['maxKey']
 
 def loadReferenceDictionary():
@@ -1449,6 +1449,12 @@ def bcpFiles():
 
     # update voc_evidence_seq auto-sequence
     execSQL = '''select setval('voc_evidence_seq', (select max(_AnnotEvidence_key) from VOC_Evidence))'''
+    print execSQL
+    db.sql(execSQL, None)
+    db.commit()
+
+    # update voc_evidence_property_seq auto-sequence
+    execSQL = '''select setval('voc_evidence_property_seq', (select max(_EvidenceProperty_key) from VOC_Evidence_Property))'''
     print execSQL
     db.sql(execSQL, None)
     db.commit()
