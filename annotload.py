@@ -1,4 +1,3 @@
-#!/usr/local/bin/python
 
 '''
 #
@@ -21,8 +20,8 @@
 #    That no one else is adding Annotations to the database.
 #
 #    Usage: annotload.py [mcv|go]
-#       if this is the mcv annotation load pass the string 'mcv'
-#       if this is a go annotation load pass the string 'go'
+#       if this is the mcv annotation load pass the str.'mcv'
+#       if this is a go annotation load pass the str.'go'
 #
 # Input:
 #
@@ -238,7 +237,7 @@ inputFileName = os.environ['ANNOTINPUTFILE']
 annotTypeName = os.environ['ANNOTTYPENAME']
 
 annotProperty = 0
-if os.environ.has_key('ANNOTPROPERTY'):
+if 'ANNOTPROPERTY' in os.environ:
     annotProperty = os.environ['ANNOTPROPERTY']
 
 delByReference = os.environ['DELETEREFERENCE']
@@ -331,7 +330,7 @@ goExcludedProperties.remove('evidence')
 def exit(status, message = None):
     '''
     # requires: status, the numeric exit status (integer)
-    #           message (string)
+    #           message (str.
     #
     # effects:
     # Print message to stderr and exits
@@ -341,16 +340,16 @@ def exit(status, message = None):
     '''
 
     if message is not None:
-	sys.stderr.write('\n' + str(message) + '\n')
+        sys.stderr.write('\n' + str(message) + '\n')
 
     try:
-	diagFile.write('\n\nEnd Date/Time: %s\n' % (mgi_utils.date()))
-	errorFile.write('\n\nEnd Date/Time: %s\n' % (mgi_utils.date()))
-	diagFile.close()
-	errorFile.close()
+        diagFile.write('\n\nEnd Date/Time: %s\n' % (mgi_utils.date()))
+        errorFile.write('\n\nEnd Date/Time: %s\n' % (mgi_utils.date()))
+        diagFile.close()
+        errorFile.close()
 
     except:
-	pass
+        pass
 
     db.useOneConnection(0)
     sys.exit(status)
@@ -397,80 +396,80 @@ def init():
 
     if len(sys.argv) == 2:
 
-	loadType = sys.argv[1]
-	print 'LOAD TYPE: %s' % sys.argv[1]
+        loadType = sys.argv[1]
+        print('LOAD TYPE: %s' % sys.argv[1])
 
-	if loadType == 'mcv':
-	    isMCV = 1
+        if loadType == 'mcv':
+            isMCV = 1
 
-	elif loadType == 'mp':
-	    isMP = 1
+        elif loadType == 'mp':
+            isMP = 1
 
-	elif loadType == 'go':
-	    isGO = 1
+        elif loadType == 'go':
+            isGO = 1
 
-	elif loadType == 'goamouse':
-	    isGOAmouse = 1
+        elif loadType == 'goamouse':
+            isGOAmouse = 1
 
-	elif loadType == 'gomousenoctua':
-	    isGOmousenoctua = 1
+        elif loadType == 'gomousenoctua':
+            isGOmousenoctua = 1
 
-	elif loadType == 'goahuman':
-	    isGOAhuman = 1
+        elif loadType == 'goahuman':
+            isGOAhuman = 1
 
-	elif loadType == 'gorat':
-	    isGOrat = 1
-	
-	elif loadType == 'diseaseMarker':
-	    isDiseaseMarker = 1
-	
-	elif loadType == 'mpMarker':
-	    isMPMarker = 1
+        elif loadType == 'gorat':
+            isGOrat = 1
+        
+        elif loadType == 'diseaseMarker':
+            isDiseaseMarker = 1
+        
+        elif loadType == 'mpMarker':
+            isMPMarker = 1
 
-	elif loadType == 'omimhpo':
-	    print 'isOMIMHPO'
-	    isOMIMHPO = 1
-	
+        elif loadType == 'omimhpo':
+            print('isOMIMHPO')
+            isOMIMHPO = 1
+        
     try:
-	inputFile = open(inputFileName, 'r')
+        inputFile = open(inputFileName, 'r')
     except:
-	exit(1, 'Could not open file %s\n' % inputFileName)
-	    
+        exit(1, 'Could not open file %s\n' % inputFileName)
+            
     try:
-	diagFile = open(diagFileName, 'w')
+        diagFile = open(diagFileName, 'w')
     except:
-	exit(1, 'Could not open file %s\n' % diagFileName)
-	    
+        exit(1, 'Could not open file %s\n' % diagFileName)
+            
     try:
-	errorFile = open(errorFileName, 'w')
+        errorFile = open(errorFileName, 'w')
     except:
-	exit(1, 'Could not open file %s\n' % errorFileName)
-	    
+        exit(1, 'Could not open file %s\n' % errorFileName)
+            
     try:
-	annotFile = open(annotFileName, 'w')
+        annotFile = open(annotFileName, 'w')
     except:
-	exit(1, 'Could not open file %s\n' % annotFileName)
-	    
+        exit(1, 'Could not open file %s\n' % annotFileName)
+            
     try:
-	evidenceFile = open(evidenceFileName, 'w')
+        evidenceFile = open(evidenceFileName, 'w')
     except:
-	exit(1, 'Could not open file %s\n' % evidenceFileName)
-	    
+        exit(1, 'Could not open file %s\n' % evidenceFileName)
+            
     try:
-	propertyFile = open(propertyFileName, 'w')
+        propertyFile = open(propertyFileName, 'w')
     except:
-	exit(1, 'Could not open file %s\n' % propertyFileName)
-	    
+        exit(1, 'Could not open file %s\n' % propertyFileName)
+            
     try:
-	noteFile = open(noteFileName, 'w')
+        noteFile = open(noteFileName, 'w')
     except:
-	exit(1, 'Could not open file %s\n' % noteFileName)
-	    
+        exit(1, 'Could not open file %s\n' % noteFileName)
+            
     try:
-	noteChunkFile = open(noteChunkFileName, 'w')
+        noteChunkFile = open(noteChunkFileName, 'w')
     except:
-	exit(1, 'Could not open file %s\n' % noteChunkFileName)
-	    
+        exit(1, 'Could not open file %s\n' % noteChunkFileName)
+            
     # Log all SQL
     db.set_sqlLogFunction(db.sqlLogAll)
 
@@ -508,13 +507,13 @@ def verifyAnnotType():
     annotTypeName = re.sub('"', '', annotTypeName)
 
     results = db.sql('''
-	select _AnnotType_key from VOC_AnnotType where name = '%s' 
-	''' % (annotTypeName), 'auto')
+        select _AnnotType_key from VOC_AnnotType where name = '%s' 
+        ''' % (annotTypeName), 'auto')
 
     if len(results) == 0:
-	exit(1, 'Invalid Annotation Type Name: %s\n' % (annotTypeName))
+        exit(1, 'Invalid Annotation Type Name: %s\n' % (annotTypeName))
     else:
-	annotTypeKey = results[0]['_AnnotType_key']
+        annotTypeKey = results[0]['_AnnotType_key']
 
 def verifyMode():
     '''
@@ -538,72 +537,72 @@ def verifyMode():
         delByReferenceKey = verifyReference(delByReference, 0, '')
 
         if delByReferenceKey is None:
-	    exit(1, 'Invalid Reference: %s\n' % (delByReference))
+            exit(1, 'Invalid Reference: %s\n' % (delByReference))
 
     if mode == 'new' or mode == 'delete':
 
-	# verify deletion reference
+        # verify deletion reference
 
-	if delByReference != "J:0":
+        if delByReference != "J:0":
 
             #print ('\nannotload.py - verifyMode - delByReference: %s, %s' % (delByReference, delByReferenceKey))
 
-	    db.sql('''create temp table toDelete as 
-	        select e._Annot_key, e._AnnotEvidence_key 
-		from VOC_Annot a, VOC_Evidence e
-		where e._Refs_key = %s
-		and e._Annot_key = a._Annot_key 
-		and a._AnnotType_key = %s
-		''' % (delByReferenceKey, annotTypeKey), None, execute = not DEBUG)
-	    db.commit()
+            db.sql('''create temp table toDelete as 
+                select e._Annot_key, e._AnnotEvidence_key 
+                from VOC_Annot a, VOC_Evidence e
+                where e._Refs_key = %s
+                and e._Annot_key = a._Annot_key 
+                and a._AnnotType_key = %s
+                ''' % (delByReferenceKey, annotTypeKey), None, execute = not DEBUG)
+            db.commit()
 
-	    db.sql('create index td_idx1 on toDelete(_Annot_key)', None)
-	    db.sql('create index td_idx2 on toDelete(_AnnotEvidence_key)', None)
-	    db.commit()
-	    
-	    db.sql('''delete from VOC_Evidence_Property p
-		using toDelete d
-		where d._AnnotEvidence_key = p._AnnotEvidence_key''', None, execute = not DEBUG)
+            db.sql('create index td_idx1 on toDelete(_Annot_key)', None)
+            db.sql('create index td_idx2 on toDelete(_AnnotEvidence_key)', None)
+            db.commit()
+            
+            db.sql('''delete from VOC_Evidence_Property p
+                using toDelete d
+                where d._AnnotEvidence_key = p._AnnotEvidence_key''', None, execute = not DEBUG)
 
-	    db.sql('''delete from VOC_Evidence e
-		using toDelete d
-		where d._AnnotEvidence_key = e._AnnotEvidence_key''', None, execute = not DEBUG)
+            db.sql('''delete from VOC_Evidence e
+                using toDelete d
+                where d._AnnotEvidence_key = e._AnnotEvidence_key''', None, execute = not DEBUG)
 
-	    db.sql('''delete from VOC_Annot a
-	        using toDelete d
-		where d._Annot_key = a._Annot_key
-		and not exists (select 1 from VOC_Evidence e
-		where d._Annot_key = e._Annot_key)''', None, execute = not DEBUG)
+            db.sql('''delete from VOC_Annot a
+                using toDelete d
+                where d._Annot_key = a._Annot_key
+                and not exists (select 1 from VOC_Evidence e
+                where d._Annot_key = e._Annot_key)''', None, execute = not DEBUG)
 
-	    # remove the Used-FC references
+            # remove the Used-FC references
             if isMP:
-	        db.sql('''delete from MGI_Reference_Assoc
-		    where _MGIType_key = 11
-		    and _Refs_key = %s
-		    and _RefAssocType_key = 1017''' % (delByReferenceKey), None, execute = not DEBUG)
+                db.sql('''delete from MGI_Reference_Assoc
+                    where _MGIType_key = 11
+                    and _Refs_key = %s
+                    and _RefAssocType_key = 1017''' % (delByReferenceKey), None, execute = not DEBUG)
 
-	    db.sql('''drop table todelete''', None)
-	    db.commit()
-	    
+            db.sql('''drop table todelete''', None)
+            db.commit()
+            
 
-	elif delByUser != "none%":
-	    # updated this to include the wildcard at the end of the comparison
-	    # above, as it is always added to the DELETEUSER environment
-	    # variable.  (so this code was always getting executed, even when
-	    # the config file had the DELETEUSER set to 'none') - jsb, 11/3/14
+        elif delByUser != "none%":
+            # updated this to include the wildcard at the end of the comparison
+            # above, as it is always added to the DELETEUSER environment
+            # variable.  (so this code was always getting executed, even when
+            # the config file had the DELETEUSER set to 'none') - jsb, 11/3/14
 
-	    db.sql('''select e._Annot_key, e._AnnotEvidence_key into temp toDelete 
-		from VOC_Annot a, VOC_Evidence e, MGI_User u 
-		where e._CreatedBy_key = u._User_key 
-		and u.login like '%s'
-		and e._Annot_key = a._Annot_key
-		and a._AnnotType_key = %s
-		''' % (delByUser, annotTypeKey), None, execute = not DEBUG)
+            db.sql('''select e._Annot_key, e._AnnotEvidence_key into temp toDelete 
+                from VOC_Annot a, VOC_Evidence e, MGI_User u 
+                where e._CreatedBy_key = u._User_key 
+                and u.login like '%s'
+                and e._Annot_key = a._Annot_key
+                and a._AnnotType_key = %s
+                ''' % (delByUser, annotTypeKey), None, execute = not DEBUG)
 
-	    db.sql('create index td2_idx1 on toDelete(_Annot_key)', None)
-	    db.sql('create index td2_idx2 on toDelete(_AnnotEvidence_key)', None)
+            db.sql('create index td2_idx1 on toDelete(_Annot_key)', None)
+            db.sql('create index td2_idx2 on toDelete(_AnnotEvidence_key)', None)
 
-	    db.sql('''delete from VOC_Evidence_Property  p
+            db.sql('''delete from VOC_Evidence_Property  p
                 using toDelete d
                 where d._AnnotEvidence_key = p._AnnotEvidence_key''', None, execute = not DEBUG)
 
@@ -616,24 +615,24 @@ def verifyMode():
                   where d._Annot_key = e._Annot_key)
                   ''', None, execute = not DEBUG)
 
-	    db.sql('''drop table todelete''', None)
-	    db.commit()
+            db.sql('''drop table todelete''', None)
+            db.commit()
 
-	else:
-	    db.sql('''delete from VOC_Annot 
-		where _AnnotType_key = %s
-		''' % (annotTypeKey), None, execute = not DEBUG)
+        else:
+            db.sql('''delete from VOC_Annot 
+                where _AnnotType_key = %s
+                ''' % (annotTypeKey), None, execute = not DEBUG)
 
     elif mode == 'append':
-	pass
+        pass
 
     elif mode == 'preview':
-	DEBUG = 1
+        DEBUG = 1
     else:
-	exit(1, 'Invalid Processing Mode:  %s\n' % (mode))
+        exit(1, 'Invalid Processing Mode:  %s\n' % (mode))
 
     if mode == 'delete':
-	exit(0)
+        exit(0)
 
 def verifyTerm(termID, lineNum, line):
     '''
@@ -657,14 +656,14 @@ def verifyTerm(termID, lineNum, line):
 
     termKey = 0
 
-    if termDict.has_key(termID):
-	termKey = termDict[termID]
+    if termID in termDict:
+        termKey = termDict[termID]
     else:
-	if loadObsolete == '0':
-	    errorFile.write('Invalid or Obsolete Term (%d): %s\n%s\n' % (lineNum, termID, line))
-	else:
-	    errorFile.write('Invalid Term (%d): %s\n%s\n' % (lineNum, termID, line))
-	termKey = 0
+        if loadObsolete == '0':
+            errorFile.write('Invalid or Obsolete Term (%d): %s\n%s\n' % (lineNum, termID, line))
+        else:
+            errorFile.write('Invalid Term (%d): %s\n%s\n' % (lineNum, termID, line))
+        termKey = 0
 
     return(termKey)
 
@@ -688,11 +687,11 @@ def verifyReference(referenceID, lineNum, line):
 
     referenceKey = 0
 
-    if referenceDict.has_key(referenceID):
-	referenceKey = referenceDict[referenceID]
+    if referenceID in referenceDict:
+        referenceKey = referenceDict[referenceID]
     else:
-	errorFile.write('Invalid Reference (%d): %s\n%s\n' % (lineNum, referenceID, line))
-	referenceKey = 0
+        errorFile.write('Invalid Reference (%d): %s\n%s\n' % (lineNum, referenceID, line))
+        referenceKey = 0
 
     return(referenceKey)
 
@@ -720,24 +719,24 @@ def verifyObject(objectID, logicalDBKey, lineNum, line):
 
     global objectDict
 
-    if objectDict.has_key(objectID):
-	    objectKey = objectDict[objectID]
+    if objectID in objectDict:
+            objectKey = objectDict[objectID]
     else:
-	results = db.sql('''
-	    select a._Object_key 
-	    from ACC_Accession a, VOC_AnnotType t
-	    where lower(a.accID) = lower('%s')
-	    and a._LogicalDB_key = %s
-	    and a._MGIType_key = t._MGIType_key
-	    and t._AnnotType_key = %s
-	    ''' % (objectID, logicalDBKey, annotTypeKey), 'auto')
+        results = db.sql('''
+            select a._Object_key 
+            from ACC_Accession a, VOC_AnnotType t
+            where lower(a.accID) = lower('%s')
+            and a._LogicalDB_key = %s
+            and a._MGIType_key = t._MGIType_key
+            and t._AnnotType_key = %s
+            ''' % (objectID, logicalDBKey, annotTypeKey), 'auto')
 
-	if len(results) == 1:
-	    objectKey = results[0]['_Object_key']
-	    objectDict[objectID] = objectKey
-	else:
-	    errorFile.write('Invalid Object (%d): %s\n%s\n' % (lineNum, objectID, line))
-	    objectKey = 0
+        if len(results) == 1:
+            objectKey = results[0]['_Object_key']
+            objectDict[objectID] = objectKey
+        else:
+            errorFile.write('Invalid Object (%d): %s\n%s\n' % (lineNum, objectID, line))
+            objectKey = 0
 
     return(objectKey)
 
@@ -791,7 +790,7 @@ def loadReferenceDictionary():
        and prefixPart = 'J:'
        ''', 'auto')
     for r in results:
-	referenceDict[r['accID']] = r['_Object_key']
+        referenceDict[r['accID']] = r['_Object_key']
 
 def loadDictionaries():
     '''
@@ -809,114 +808,114 @@ def loadDictionaries():
     # cache annotation type vocabulary
 
     cmd = '''
-	select t._Object_key, t.accID 
-	from VOC_Term_Acc_View t, VOC_Term tm, VOC_AnnotType a
-	where t._Object_key = tm._Term_key 
-	and tm._Vocab_key = a._Vocab_key
-	and a._AnnotType_key = %s''' % (annotTypeKey)
+        select t._Object_key, t.accID 
+        from VOC_Term_Acc_View t, VOC_Term tm, VOC_AnnotType a
+        where t._Object_key = tm._Term_key 
+        and tm._Vocab_key = a._Vocab_key
+        and a._AnnotType_key = %s''' % (annotTypeKey)
 
     # if loadObsolete is false, then only load non-obsoleted terms...
 
     if loadObsolete == '0':
-	# only load non-obsoleted terms
-	cmd = cmd + ' and tm.isObsolete = 0'
+        # only load non-obsoleted terms
+        cmd = cmd + ' and tm.isObsolete = 0'
 
     results = db.sql(cmd, 'auto')
 
     for r in results:
-	termDict[r['accID']] = r['_Object_key']
+        termDict[r['accID']] = r['_Object_key']
 
     # cache property vocabulary(s)
 
     cmd = '''
-	select _Term_key, term
-	from VOC_Term
-	where _Vocab_key in (%s)
-	''' % (annotProperty)
+        select _Term_key, term
+        from VOC_Term
+        where _Vocab_key in (%s)
+        ''' % (annotProperty)
     results = db.sql(cmd, 'auto')
 
     for r in results:
-	pTermDict[r['term']] = r['_Term_key']
+        pTermDict[r['term']] = r['_Term_key']
 
     # cache annotation keys for this type of annotation
 
     results = db.sql('''
-	select _Annot_key, _Object_key, _Term_key, _Qualifier_key 
-	from VOC_Annot
-	where _AnnotType_key = %s
-	''' % (annotTypeKey), 'auto')
+        select _Annot_key, _Object_key, _Term_key, _Qualifier_key 
+        from VOC_Annot
+        where _AnnotType_key = %s
+        ''' % (annotTypeKey), 'auto')
     for r in results:
-	key = '%s:%s:%s:%s' % (annotTypeKey, r['_Object_key'], r['_Term_key'], r['_Qualifier_key'])
-	value = r['_Annot_key']
-	annotDict[key] = value
+        key = '%s:%s:%s:%s' % (annotTypeKey, r['_Object_key'], r['_Term_key'], r['_Qualifier_key'])
+        value = r['_Annot_key']
+        annotDict[key] = value
 
     # cache evidence keys for this type of annotation
 
     cmd = '''select e._Annot_key, e._EvidenceTerm_key, e._Refs_key 
-	from VOC_Evidence e, VOC_Annot a
+        from VOC_Evidence e, VOC_Annot a
         where a._AnnotType_key = %s
         and a._Annot_key = e._Annot_key''' % (annotTypeKey)
 
     results = db.sql(cmd, 'auto')
     for r in results:
-	key = '%s:%s:%s' % (r['_Annot_key'], r['_EvidenceTerm_key'], r['_Refs_key'])
-	value = r['_Annot_key']
-	evidenceDict[key] = value
+        key = '%s:%s:%s' % (r['_Annot_key'], r['_EvidenceTerm_key'], r['_Refs_key'])
+        value = r['_Annot_key']
+        evidenceDict[key] = value
 
     if isGOmousenoctua:
 
-	cmd = '''select e._Annot_key, e._EvidenceTerm_key, e._Refs_key, e.inferredFrom, t.term || '&=&' || p.value as property
+        cmd = '''select e._Annot_key, e._EvidenceTerm_key, e._Refs_key, e.inferredFrom, t.term || '&=&' || p.value as property
         from VOC_Evidence e, VOC_Annot a, VOC_Evidence_Property p, VOC_Term t
         where a._AnnotType_key = %s
         and a._Annot_key = e._Annot_key
         and e._AnnotEvidence_key = p._AnnotEvidence_key
         and p._PropertyTerm_key = t._Term_key
-	and  t.term not in ('%s')
+        and  t.term not in ('%s')
         ''' % (annotTypeKey, "','".join(goExcludedProperties))
 
-	# 
-	# read in all properties
-	#
-	tmpDict = {}
+        # 
+        # read in all properties
+        #
+        tmpDict = {}
         results = db.sql(cmd, 'auto')
         for r in results:
 
-	    inferredFrom = r['inferredFrom']
-	    if inferredFrom == None:
-	        inferredFrom = ''
+            inferredFrom = r['inferredFrom']
+            if inferredFrom == None:
+                inferredFrom = ''
 
-	    key = '%s:%s:%s:%s' % \
-	    	(r['_Annot_key'], r['_EvidenceTerm_key'], r['_Refs_key'], inferredFrom)
+            key = '%s:%s:%s:%s' % \
+                (r['_Annot_key'], r['_EvidenceTerm_key'], r['_Refs_key'], inferredFrom)
             value = r['property']
 
-	    if key not in tmpDict:
-	        tmpDict[key] = []
+            if key not in tmpDict:
+                tmpDict[key] = []
             tmpDict[key].append(value)
       
-	#
-	# join together all properties needed for duplicate check
-	#
+        #
+        # join together all properties needed for duplicate check
+        #
         for key in tmpDict:
-	    pKey = '&==&'.join(tmpDict[key])
-	    newKey = key + ':' + pKey
-	    value = key.split(':')[0]
-	    propertyDict[newKey] = value
+            pKey = '&==&'.join(tmpDict[key])
+            newKey = key + ':' + pKey
+            value = key.split(':')[0]
+            propertyDict[newKey] = value
 
 def loadObjectDict():
     global objectDict
     # cache object keys
-    print 'ldb: %s, annotType: %s' % (logicalDBKey, annotTypeKey)
+    print('ldb: %s, annotType: %s' % (logicalDBKey, annotTypeKey))
 
     results = db.sql('''select a.accID, a._Object_key
-	from ACC_Accession a, VOC_AnnotType t
-	where a._LogicalDB_key = %s
-	and a.preferred = 1
-	and a._MGIType_key = t._MGIType_key
-	and t._AnnotType_key = %s''' % (logicalDBKey, annotTypeKey), 'auto')
+        from ACC_Accession a, VOC_AnnotType t
+        where a._LogicalDB_key = %s
+        and a.preferred = 1
+        and a._MGIType_key = t._MGIType_key
+        and t._AnnotType_key = %s''' % (logicalDBKey, annotTypeKey), 'auto')
     for r in results:
-	key = r['accID']
-	value = r['_Object_key']
-	objectDict[key] = value
+        key = r['accID']
+        value = r['_Object_key']
+        objectDict[key] = value
 
 def createAnnotationRecord(objectKey, termKey, qualifierKey, entryDate):
     '''
@@ -950,22 +949,22 @@ def createAnnotationRecord(objectKey, termKey, qualifierKey, entryDate):
 
     # annotation may exist in our dictionary already...
 
-    if annotDict.has_key(aKey):
-	useAnnotKey = annotDict[aKey]
+    if aKey in annotDict:
+        useAnnotKey = annotDict[aKey]
     else:
-	useAnnotKey = annotKey
-	annotDict[aKey] = useAnnotKey
-	annotKey = annotKey + 1
+        useAnnotKey = annotKey
+        annotDict[aKey] = useAnnotKey
+        annotKey = annotKey + 1
 
-	# create the new VOC_Annot record
+        # create the new VOC_Annot record
 
-	annotFile.write('%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
-		% (useAnnotKey, annotTypeKey, objectKey, termKey, qualifierKey, entryDate, entryDate))
+        annotFile.write('%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
+                % (useAnnotKey, annotTypeKey, objectKey, termKey, qualifierKey, entryDate, entryDate))
 
     return(useAnnotKey)
 
 def createEvidenceRecord(newAnnotKey, evidenceKey, referenceKey, \
-	inferredFrom, editorKey, notes, properties, entryDate, line, lineNum):
+        inferredFrom, editorKey, notes, properties, entryDate, line, lineNum):
     '''
     # requires:
     #	newAnnotKey - primary key of the Annotation object
@@ -1029,29 +1028,29 @@ def createEvidenceRecord(newAnnotKey, evidenceKey, referenceKey, \
             eKey = '%s:%s:%s:%s' % (newAnnotKey, evidenceKey, referenceKey, properties)
 
     elif isMPMarker:
-	    eKey = '%s:%s:%s:%s:%s' % (newAnnotKey, evidenceKey, referenceKey, properties, notes)
+            eKey = '%s:%s:%s:%s:%s' % (newAnnotKey, evidenceKey, referenceKey, properties, notes)
 
     elif isDiseaseMarker or isMPMarker:
-	    eKey = '%s:%s:%s:%s:%s' % (newAnnotKey, evidenceKey, referenceKey, properties, inferredFrom)
+            eKey = '%s:%s:%s:%s:%s' % (newAnnotKey, evidenceKey, referenceKey, properties, inferredFrom)
 
     elif isGOAmouse or isGOAhuman or isGOrat:
-	    eKey = '%s:%s:%s:%s:%s' % (newAnnotKey, evidenceKey, referenceKey, inferredFrom, properties)
+            eKey = '%s:%s:%s:%s:%s' % (newAnnotKey, evidenceKey, referenceKey, inferredFrom, properties)
 
     elif isGOmousenoctua:
 
-	    # exclude the goExcludedProperties list from the duplicate check
-	    # note that *all* properties are still loaded
+            # exclude the goExcludedProperties list from the duplicate check
+            # note that *all* properties are still loaded
 
-	    dupcheck_properties = []
+            dupcheck_properties = []
 
-	    allProps = string.split(properties, '&==&')
-	    for p in allProps:
-		pTerm, pValue = string.split(p,'&=&')
-	        if pTerm not in goExcludedProperties:
-	             dupcheck_properties.append(pTerm + '&=&' + pValue)
+            allProps = str.split(properties, '&==&')
+            for p in allProps:
+                pTerm, pValue = str.split(p,'&=&')
+                if pTerm not in goExcludedProperties:
+                     dupcheck_properties.append(pTerm + '&=&' + pValue)
 
-	    eKey = '%s:%s:%s:%s:%s' % (newAnnotKey, evidenceKey, referenceKey, inferredFrom, \
-	    	'&==&'.join(dupcheck_properties))
+            eKey = '%s:%s:%s:%s:%s' % (newAnnotKey, evidenceKey, referenceKey, inferredFrom, \
+                '&==&'.join(dupcheck_properties))
 
     else:
             eKey = '%s:%s:%s' % (newAnnotKey, evidenceKey, referenceKey)
@@ -1061,23 +1060,23 @@ def createEvidenceRecord(newAnnotKey, evidenceKey, referenceKey, \
 
     if isGOmousenoctua:
         if eKey in propertyDict:
-	    #errorFile.write(eKey + '\n')
-	    errorFile.write('Duplicate evidence/property (%d): \n%s\n' % (lineNum, line))
-	    return
+            #errorFile.write(eKey + '\n')
+            errorFile.write('Duplicate evidence/property (%d): \n%s\n' % (lineNum, line))
+            return
         else:
-	    propertyDict[eKey] = eKey
+            propertyDict[eKey] = eKey
 
-    elif evidenceDict.has_key(eKey):
-	    errorFile.write('Duplicate evidence (%d): \n%s\n' % (lineNum, line))
-	    return
+    elif eKey in evidenceDict:
+            errorFile.write('Duplicate evidence (%d): \n%s\n' % (lineNum, line))
+            return
 
     else:
         # not a duplicate
         evidenceDict[eKey] = eKey
 
     evidenceFile.write('%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
-	    % (evidencePrimaryKey, newAnnotKey, evidenceKey, referenceKey, \
-		inferredFrom, editorKey, editorKey, entryDate, entryDate))
+            % (evidencePrimaryKey, newAnnotKey, evidenceKey, referenceKey, \
+                inferredFrom, editorKey, editorKey, entryDate, entryDate))
 
     # storing data in MGI_Note/MGI_NoteChunk
     #
@@ -1089,15 +1088,15 @@ def createEvidenceRecord(newAnnotKey, evidenceKey, referenceKey, \
 
     if len(notes) > 0:
 
-	noteFile.write('%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
-	    % (noteKey, evidencePrimaryKey, mgiNoteObjectKey, mgiNoteTypeKey, \
-	       editorKey, editorKey, entryDate, entryDate))
+        noteFile.write('%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
+            % (noteKey, evidencePrimaryKey, mgiNoteObjectKey, mgiNoteTypeKey, \
+               editorKey, editorKey, entryDate, entryDate))
 
-	noteChunkFile.write('%s\t1\t%s\t%s\t%s\t%s\t%s\n' \
-	    % (noteKey, notes, editorKey, \
-	       editorKey, entryDate, entryDate))
+        noteChunkFile.write('%s\t1\t%s\t%s\t%s\t%s\t%s\n' \
+            % (noteKey, notes, editorKey, \
+               editorKey, entryDate, entryDate))
 
-	noteKey = noteKey + 1
+        noteKey = noteKey + 1
 
     #
     # storing data in VOC_Evidence_Property
@@ -1112,31 +1111,31 @@ def createEvidenceRecord(newAnnotKey, evidenceKey, referenceKey, \
 
     if len(properties) > 0:
 
-	stanza = 1
-	allStanzas = string.split(properties, '&===&')
+        stanza = 1
+        allStanzas = str.split(properties, '&===&')
 
-	for s in allStanzas:
+        for s in allStanzas:
 
-	    seqnum = 1
-	    allProps = string.split(s, '&==&')
+            seqnum = 1
+            allProps = str.split(s, '&==&')
 
-	    for p in allProps:
+            for p in allProps:
 
-		#print properties
-		pTerm, pValue = string.split(p,'&=&')
+                #print properties
+                pTerm, pValue = str.split(p,'&=&')
 
-		if pTermDict.has_key(pTerm):
-		    propertyFile.write('%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
-		    % (propertyKey, evidencePrimaryKey, pTermDict[pTerm], \
-		       stanza, seqnum, pValue, editorKey, editorKey, \
-		       entryDate, entryDate))
+                if pTerm in pTermDict:
+                    propertyFile.write('%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
+                    % (propertyKey, evidencePrimaryKey, pTermDict[pTerm], \
+                       stanza, seqnum, pValue, editorKey, editorKey, \
+                       entryDate, entryDate))
 
-		    seqnum = seqnum + 1
-		    propertyKey = propertyKey + 1
-		else:
-	            errorFile.write('Invalid Property (%s):  %s\n%s\n' % (lineNum, pTerm, line))
+                    seqnum = seqnum + 1
+                    propertyKey = propertyKey + 1
+                else:
+                    errorFile.write('Invalid Property (%s):  %s\n%s\n' % (lineNum, pTerm, line))
 
-	    stanza = stanza + 1
+            stanza = stanza + 1
 
     evidencePrimaryKey = evidencePrimaryKey + 1
 
@@ -1169,103 +1168,103 @@ def processMcvFile():
 
     # For each line in the input file
     for line in inputFile.readlines():
-	lineNum = lineNum + 1
+        lineNum = lineNum + 1
 
-	# Split the line into tokens
-	tokens = string.splitfields(line[:-1], '\t')
+        # Split the line into tokens
+        tokens = str.splitfields(line[:-1], '\t')
 
-	try:
-	    termID = tokens[0]
-	    mgiID = tokens[1]
-	    jnum = tokens[2]
-	    evidence = tokens[3]
-	    inferredFrom = string.strip(tokens[4])
-	    qualifier = string.strip(tokens[5])
-	    editor = string.strip(tokens[6])
-	    entryDate = string.strip(tokens[7])
-	    notes = string.strip(tokens[8])
-	    properties = ''
+        try:
+            termID = tokens[0]
+            mgiID = tokens[1]
+            jnum = tokens[2]
+            evidence = tokens[3]
+            inferredFrom = str.strip(tokens[4])
+            qualifier = str.strip(tokens[5])
+            editor = str.strip(tokens[6])
+            entryDate = str.strip(tokens[7])
+            notes = str.strip(tokens[8])
+            properties = ''
 
-	    if len(tokens) > 9:
-		# field  10 reserved for optional ldb
-		# the default is "1" (MGI)
-		col10 = accessionlib.get_LogicalDB_key(tokens[9])
-		if col10 != None:
-		    logicalDBKey = col10
-	    if len(tokens) > 10:
-		# field 11 reserved for optional properties
-		properties = string.strip(tokens[10])
+            if len(tokens) > 9:
+                # field  10 reserved for optional ldb
+                # the default is "1" (MGI)
+                col10 = accessionlib.get_LogicalDB_key(tokens[9])
+                if col10 != None:
+                    logicalDBKey = col10
+            if len(tokens) > 10:
+                # field 11 reserved for optional properties
+                properties = str.strip(tokens[10])
 
-	except:
-	    exit(1, 'Invalid Line (%d): \n%s\n' % (lineNum, line))
+        except:
+            exit(1, 'Invalid Line (%d): \n%s\n' % (lineNum, line))
 
-	# if we just have an MGI ID delete all annotations and continue
-	if termID == '' and jnum == '' and evidence == '' and \
-	   qualifier == '' and editor == '':
+        # if we just have an MGI ID delete all annotations and continue
+        if termID == '' and jnum == '' and evidence == '' and \
+           qualifier == '' and editor == '':
 
-	    markerKey = verifyObject(mgiID, logicalDBKey, lineNum, line)
+            markerKey = verifyObject(mgiID, logicalDBKey, lineNum, line)
 
-	    if markerKey == 0: # not valid
-		# skip this record, verifyObject logs to discrepancy file
-		print 'skipping record, invalid MGI ID for delete only mode'
-		continue
-	    else:
-		# delete existing annotations for this marker/annotation type
-		# and go on to next record
-		print 'delete only mode, deleting all annotations for %s' % markerKey
-		print deleteSQL % (annotTypeKey, markerKey)
-		db.sql(deleteSQL % (annotTypeKey, markerKey), None)
-		continue
+            if markerKey == 0: # not valid
+                # skip this record, verifyObject logs to discrepancy file
+                print('skipping record, invalid MGI ID for delete only mode')
+                continue
+            else:
+                # delete existing annotations for this marker/annotation type
+                # and go on to next record
+                print('delete only mode, deleting all annotations for %s' % markerKey)
+                print(deleteSQL % (annotTypeKey, markerKey))
+                db.sql(deleteSQL % (annotTypeKey, markerKey), None)
+                continue
 
-	# if we get here, continue verifying
-	termKey = verifyTerm(termID, lineNum, line)
-	markerKey = verifyObject(mgiID, logicalDBKey, lineNum, line)
-	referenceKey = verifyReference(jnum, lineNum, line)
-	evidenceKey = vocabloadlib.verifyEvidence(evidence, annotTypeKey, lineNum, errorFile)
-	qualifierKey = vocabloadlib.verifyQualifier(qualifier, annotTypeKey, 0, lineNum, errorFile)
-	editorKey = loadlib.verifyUser(editor, lineNum, errorFile)
-	
-	# if any verification failed, this is an error
-	if termKey == 0 or markerKey == 0 or \
-	   referenceKey == 0 or \
-	   evidenceKey == 0 or \
-	   qualifierKey == 0 or \
-	   editorKey == 0:
+        # if we get here, continue verifying
+        termKey = verifyTerm(termID, lineNum, line)
+        markerKey = verifyObject(mgiID, logicalDBKey, lineNum, line)
+        referenceKey = verifyReference(jnum, lineNum, line)
+        evidenceKey = vocabloadlib.verifyEvidence(evidence, annotTypeKey, lineNum, errorFile)
+        qualifierKey = vocabloadlib.verifyQualifier(qualifier, annotTypeKey, 0, lineNum, errorFile)
+        editorKey = loadlib.verifyUser(editor, lineNum, errorFile)
+        
+        # if any verification failed, this is an error
+        if termKey == 0 or markerKey == 0 or \
+           referenceKey == 0 or \
+           evidenceKey == 0 or \
+           qualifierKey == 0 or \
+           editorKey == 0:
 
-	    continue
+            continue
 
-	# If the entry date is not given, use the current date
-	if len(entryDate) == 0:
-	    entryDate = loaddate
+        # If the entry date is not given, use the current date
+        if len(entryDate) == 0:
+            entryDate = loaddate
 
-	# if we get here, there are no errors so process the annotation
+        # if we get here, there are no errors so process the annotation
 
-	# first delete if we haven't already seen this marker in the input
-	if not markerKey in mkrKeyList:
-	    db.sql(deleteSQL % (annotTypeKey, markerKey), None)
-	    mkrKeyList.append(markerKey)
+        # first delete if we haven't already seen this marker in the input
+        if not markerKey in mkrKeyList:
+            db.sql(deleteSQL % (annotTypeKey, markerKey), None)
+            mkrKeyList.append(markerKey)
 
-	# then create annotations
-	# first delete from annotDict, because we've deleted from the database
-	aKey = '%s:%s:%s:%s' % (annotTypeKey, markerKey, termKey, qualifierKey)
-	if annotDict.has_key(aKey):
-	    del annotDict[aKey]
+        # then create annotations
+        # first delete from annotDict, because we've deleted from the database
+        aKey = '%s:%s:%s:%s' % (annotTypeKey, markerKey, termKey, qualifierKey)
+        if aKey in annotDict:
+            del annotDict[aKey]
 
-	# now create an annotation record
-	newAnnotKey = createAnnotationRecord( \
-	    markerKey, termKey, qualifierKey, entryDate)
-	
-	# now create evidence record
-	createEvidenceRecord(newAnnotKey, \
-	    evidenceKey, \
-	    referenceKey, \
-	    inferredFrom, \
-	    editorKey, \
-	    notes, \
-	    properties, \
-	    entryDate, \
-	    line, \
-	    lineNum)
+        # now create an annotation record
+        newAnnotKey = createAnnotationRecord( \
+            markerKey, termKey, qualifierKey, entryDate)
+        
+        # now create evidence record
+        createEvidenceRecord(newAnnotKey, \
+            evidenceKey, \
+            referenceKey, \
+            inferredFrom, \
+            editorKey, \
+            notes, \
+            properties, \
+            entryDate, \
+            line, \
+            lineNum)
 
     db.commit()
 
@@ -1292,84 +1291,84 @@ def processFile():
 
     for line in inputFile.readlines():
 
-	error = 0
-	lineNum = lineNum + 1
+        error = 0
+        lineNum = lineNum + 1
 
-	# Split the line into tokens
-	tokens = string.splitfields(line[:-1], '\t')
+        # Split the line into tokens
+        tokens = str.splitfields(line[:-1], '\t')
 
-	try:
-	    termID = tokens[0]
-	    objectID = tokens[1]
-	    jnum = tokens[2]
-	    evidence = tokens[3]
-	    inferredFrom = string.strip(tokens[4])
-	    qualifier = string.strip(tokens[5])
-	    editor = string.strip(tokens[6])
-	    entryDate = string.strip(tokens[7])
-	    notes = string.strip(tokens[8])
-	    properties = ''
+        try:
+            termID = tokens[0]
+            objectID = tokens[1]
+            jnum = tokens[2]
+            evidence = tokens[3]
+            inferredFrom = str.strip(tokens[4])
+            qualifier = str.strip(tokens[5])
+            editor = str.strip(tokens[6])
+            entryDate = str.strip(tokens[7])
+            notes = str.strip(tokens[8])
+            properties = ''
 
-	    if len(tokens) > 9:
-		# field  10 reserved for optional ldb
-		# the default is "1" (MGI)
-	  	#print tokens[9]
+            if len(tokens) > 9:
+                # field  10 reserved for optional ldb
+                # the default is "1" (MGI)
+                #print tokens[9]
 
-		col10 = accessionlib.get_LogicalDB_key(string.strip(tokens[9]))
-		#print col10
+                col10 = accessionlib.get_LogicalDB_key(str.strip(tokens[9]))
+                #print col10
 
-		if col10 != None:
-		    logicalDBKey = col10
+                if col10 != None:
+                    logicalDBKey = col10
 
-		if len(tokens) > 10:
-		    # field 11 reserved for optional properties
-		    properties = string.strip(tokens[10])
+                if len(tokens) > 10:
+                    # field 11 reserved for optional properties
+                    properties = str.strip(tokens[10])
 
-	except:
-	    exit(1, 'Invalid Line (%d): \n%s\n' % (lineNum, line))
+        except:
+            exit(1, 'Invalid Line (%d): \n%s\n' % (lineNum, line))
 
-	# for files that specify logicalDB - we won't know that value until we get the first term
-	if objectDictLoaded == 0:
-	    loadObjectDict()
-	    objectDictLoaded = 1
+        # for files that specify logicalDB - we won't know that value until we get the first term
+        if objectDictLoaded == 0:
+            loadObjectDict()
+            objectDictLoaded = 1
 
-	termKey = verifyTerm(termID, lineNum, line)
-	objectKey = verifyObject(objectID, logicalDBKey, lineNum, line)
-	referenceKey = verifyReference(jnum, lineNum, line)
-	evidenceKey = vocabloadlib.verifyEvidence(evidence, annotTypeKey, lineNum, errorFile)
-	qualifierKey = vocabloadlib.verifyQualifier(qualifier, annotTypeKey, 0, lineNum, errorFile)
-	editorKey = loadlib.verifyUser(editor, lineNum, errorFile)
+        termKey = verifyTerm(termID, lineNum, line)
+        objectKey = verifyObject(objectID, logicalDBKey, lineNum, line)
+        referenceKey = verifyReference(jnum, lineNum, line)
+        evidenceKey = vocabloadlib.verifyEvidence(evidence, annotTypeKey, lineNum, errorFile)
+        qualifierKey = vocabloadlib.verifyQualifier(qualifier, annotTypeKey, 0, lineNum, errorFile)
+        editorKey = loadlib.verifyUser(editor, lineNum, errorFile)
 
-	if termKey == 0 or objectKey == 0 or \
-	    referenceKey == 0 or \
-	    evidenceKey == 0 or \
-	    qualifierKey == 0 or \
-	    editorKey == 0:
+        if termKey == 0 or objectKey == 0 or \
+            referenceKey == 0 or \
+            evidenceKey == 0 or \
+            qualifierKey == 0 or \
+            editorKey == 0:
 
-	    # set error flag to true
-	    error = 1
+            # set error flag to true
+            error = 1
 
-	# If the entry date is not given, use the current date
-	if len(entryDate) == 0:
-	    entryDate = loaddate
+        # If the entry date is not given, use the current date
+        if len(entryDate) == 0:
+            entryDate = loaddate
 
-	# if errors, continue to next record
-	if error:
-	    continue
+        # if errors, continue to next record
+        if error:
+            continue
 
-	# if no errors, process the annotation
-	newAnnotKey = createAnnotationRecord(objectKey, termKey, qualifierKey, entryDate)
+        # if no errors, process the annotation
+        newAnnotKey = createAnnotationRecord(objectKey, termKey, qualifierKey, entryDate)
 
-	createEvidenceRecord(newAnnotKey, \
-	    evidenceKey, \
-	    referenceKey, \
-	    inferredFrom, \
-	    editorKey, \
-	    notes, \
-	    properties, \
-	    entryDate, \
-	    line, \
-	    lineNum)
+        createEvidenceRecord(newAnnotKey, \
+            evidenceKey, \
+            referenceKey, \
+            inferredFrom, \
+            editorKey, \
+            notes, \
+            properties, \
+            entryDate, \
+            line, \
+            lineNum)
 
         # don't skip the bcp file loading...data exists that needs to be loaded
         skipBCP = 0
@@ -1398,7 +1397,7 @@ def bcpFiles():
     propertyFile.close()
 
     if DEBUG:
-	return
+        return
 
     if skipBCP:
         return 0
@@ -1443,28 +1442,28 @@ def bcpFiles():
 
     # update voc_annot_seq auto-sequence
     execSQL = '''select setval('voc_annot_seq', (select max(_Annot_key) from VOC_Annot))'''
-    print execSQL
+    print(execSQL)
     db.sql(execSQL, None)
     db.commit()
 
     # update voc_evidence_seq auto-sequence
     execSQL = '''select setval('voc_evidence_seq', (select max(_AnnotEvidence_key) from VOC_Evidence))'''
-    print execSQL
+    print(execSQL)
     db.sql(execSQL, None)
     db.commit()
 
     # update voc_evidence_property_seq auto-sequence
     execSQL = '''select setval('voc_evidence_property_seq', (select max(_EvidenceProperty_key) from VOC_Evidence_Property))'''
-    print execSQL
+    print(execSQL)
     db.sql(execSQL, None)
     db.commit()
 
     # for GO/GAF annotations only...
     if isGO or isGOAmouse or isGOAhuman or isGOmousenoctua:
         execSQL = '''select * from VOC_deleteGOGAFRed('%s')''' % (delByUser)
-        print execSQL
+        print(execSQL)
         db.sql(execSQL, None)
-	db.commit()
+        db.commit()
 
 #
 # Main
