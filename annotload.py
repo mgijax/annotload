@@ -1,4 +1,3 @@
-
 '''
 #
 # Purpose:
@@ -20,8 +19,8 @@
 #    That no one else is adding Annotations to the database.
 #
 #    Usage: annotload.py [mcv|go]
-#       if this is the mcv annotation load pass the str.'mcv'
-#       if this is a go annotation load pass the str.'go'
+#       if this is the mcv annotation load pass the string 'mcv'
+#       if this is a go annotation load pass the string 'go'
 #
 # Input:
 #
@@ -214,7 +213,6 @@
 
 import sys
 import os
-import string
 import re
 import db
 import accessionlib
@@ -330,7 +328,7 @@ goExcludedProperties.remove('evidence')
 def exit(status, message = None):
     '''
     # requires: status, the numeric exit status (integer)
-    #           message (str.
+    #           message (string)
     #
     # effects:
     # Print message to stderr and exits
