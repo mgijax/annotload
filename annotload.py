@@ -1169,7 +1169,7 @@ def processMcvFile():
         lineNum = lineNum + 1
 
         # Split the line into tokens
-        tokens = str.splitfields(line[:-1], '\t')
+        tokens = str.split(line[:-1], '\t')
 
         try:
             termID = tokens[0]
@@ -1293,7 +1293,7 @@ def processFile():
         lineNum = lineNum + 1
 
         # Split the line into tokens
-        tokens = str.splitfields(line[:-1], '\t')
+        tokens = str.split(line[:-1], '\t')
 
         try:
             termID = tokens[0]
