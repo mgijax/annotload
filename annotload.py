@@ -1056,21 +1056,21 @@ def createEvidenceRecord(newAnnotKey, evidenceKey, referenceKey, \
     # evidence record may exist in our dictionary already
     # if so, it's a duplicate; let's report it
 
-    if isGOmousenoctua:
-        if eKey in propertyDict:
+    #if isGOmousenoctua:
+        #if eKey in propertyDict:
             #errorFile.write(eKey + '\n')
-            errorFile.write('Duplicate evidence/property (%d): \n%s\n' % (lineNum, line))
-            return
-        else:
-            propertyDict[eKey] = eKey
+        #    errorFile.write('Duplicate evidence/property (%d): \n%s\n' % (lineNum, line))
+        #    return
+        #else:
+        #    propertyDict[eKey] = eKey
 
-    elif eKey in evidenceDict:
-            errorFile.write('Duplicate evidence (%d): \n%s\n' % (lineNum, line))
-            return
+    #elif eKey in evidenceDict:
+    #        errorFile.write('Duplicate evidence (%d): \n%s\n' % (lineNum, line))
+    #        return
 
-    else:
+    #else:
         # not a duplicate
-        evidenceDict[eKey] = eKey
+    #    evidenceDict[eKey] = eKey
 
     evidenceFile.write('%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
             % (evidencePrimaryKey, newAnnotKey, evidenceKey, referenceKey, \
