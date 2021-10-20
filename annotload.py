@@ -1022,6 +1022,9 @@ def createEvidenceRecord(newAnnotKey, evidenceKey, referenceKey, \
     #   (AnnotKey, evidenceKey, referenceKey, inferredFrom, '&==&'.join(dupcheck_properties))
     #
 
+    creationDate = entryDate
+    modificationDate = entryDate
+
     if isMP or isOMIMHPO:
             eKey = '%s:%s:%s:%s' % (newAnnotKey, evidenceKey, referenceKey, properties)
 
@@ -1044,6 +1047,8 @@ def createEvidenceRecord(newAnnotKey, evidenceKey, referenceKey, \
             allProps = str.split(properties, '&==&')
             for p in allProps:
                 pTerm, pValue = str.split(p,'&=&')
+                if pTerm == 'creation-date':
+                        creationDate = pValue
                 if pTerm not in goExcludedProperties:
                      dupcheck_properties.append(pTerm + '&=&' + pValue)
 
@@ -1077,7 +1082,7 @@ def createEvidenceRecord(newAnnotKey, evidenceKey, referenceKey, \
 
     evidenceFile.write('%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
             % (evidencePrimaryKey, newAnnotKey, evidenceKey, referenceKey, \
-                inferredFrom, editorKey, editorKey, entryDate, entryDate))
+                inferredFrom, editorKey, editorKey, creationDate, modificationDate))
 
     # storing data in MGI_Note/MGI_NoteChunk
     #
@@ -1129,7 +1134,7 @@ def createEvidenceRecord(newAnnotKey, evidenceKey, referenceKey, \
                     propertyFile.write('%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
                     % (propertyKey, evidencePrimaryKey, pTermDict[pTerm], \
                        stanza, seqnum, pValue, editorKey, editorKey, \
-                       entryDate, entryDate))
+                       creationDate, modificationDate))
 
                     seqnum = seqnum + 1
                     propertyKey = propertyKey + 1
