@@ -830,6 +830,9 @@ def loadDictionaries():
         from VOC_Term
         where _Vocab_key in (%s)
         ''' % (annotProperty)
+    # hack for GO
+    if isGOmousenoctua:
+        cmd += " and term not in ('creation-date')"
     results = db.sql(cmd, 'auto')
 
     for r in results:
@@ -860,44 +863,44 @@ def loadDictionaries():
         value = r['_Annot_key']
         evidenceDict[key] = value
 
-    if isGOmousenoctua:
-
-        cmd = '''select e._Annot_key, e._EvidenceTerm_key, e._Refs_key, e.inferredFrom, t.term || '&=&' || p.value as property
-        from VOC_Evidence e, VOC_Annot a, VOC_Evidence_Property p, VOC_Term t
-        where a._AnnotType_key = %s
-        and a._Annot_key = e._Annot_key
-        and e._AnnotEvidence_key = p._AnnotEvidence_key
-        and p._PropertyTerm_key = t._Term_key
-        and  t.term not in ('%s')
-        ''' % (annotTypeKey, "','".join(goExcludedProperties))
-
-        # 
-        # read in all properties
-        #
-        tmpDict = {}
-        results = db.sql(cmd, 'auto')
-        for r in results:
-
-            inferredFrom = r['inferredFrom']
-            if inferredFrom == None:
-                inferredFrom = ''
-
-            key = '%s:%s:%s:%s' % \
-                (r['_Annot_key'], r['_EvidenceTerm_key'], r['_Refs_key'], inferredFrom)
-            value = r['property']
-
-            if key not in tmpDict:
-                tmpDict[key] = []
-            tmpDict[key].append(value)
-      
-        #
-        # join together all properties needed for duplicate check
-        #
-        for key in tmpDict:
-            pKey = '&==&'.join(tmpDict[key])
-            newKey = key + ':' + pKey
-            value = key.split(':')[0]
-            propertyDict[newKey] = value
+#    if isGOmousenoctua:
+#
+#        cmd = '''select e._Annot_key, e._EvidenceTerm_key, e._Refs_key, e.inferredFrom, t.term || '&=&' || p.value as property
+#        from VOC_Evidence e, VOC_Annot a, VOC_Evidence_Property p, VOC_Term t
+#        where a._AnnotType_key = %s
+#        and a._Annot_key = e._Annot_key
+#        and e._AnnotEvidence_key = p._AnnotEvidence_key
+#        and p._PropertyTerm_key = t._Term_key
+#        and  t.term not in ('%s')
+#        ''' % (annotTypeKey, "','".join(goExcludedProperties))
+#
+#        # 
+#        # read in all properties
+#        #
+#        tmpDict = {}
+#        results = db.sql(cmd, 'auto')
+#        for r in results:
+#
+#            inferredFrom = r['inferredFrom']
+#            if inferredFrom == None:
+#                inferredFrom = ''
+#
+#            key = '%s:%s:%s:%s' % \
+#                (r['_Annot_key'], r['_EvidenceTerm_key'], r['_Refs_key'], inferredFrom)
+#            value = r['property']
+#
+#            if key not in tmpDict:
+#                tmpDict[key] = []
+#            tmpDict[key].append(value)
+#      
+#        #
+#        # join together all properties needed for duplicate check
+#        #
+#        for key in tmpDict:
+#            pKey = '&==&'.join(tmpDict[key])
+#            newKey = key + ':' + pKey
+#            value = key.split(':')[0]
+#            propertyDict[newKey] = value
 
 def loadObjectDict():
     global objectDict
