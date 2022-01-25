@@ -252,7 +252,6 @@ annotFile = ''		# file descriptor
 evidenceFile = ''	# file descriptor
 propertyFile = ''	# file descriptor
 noteFile = ''		# file descriptor
-noteChunkFile = ''	# file descriptor
 
 diagFileName = ''	# file name
 errorFileName = ''	# file name
@@ -260,15 +259,14 @@ annotFileName = ''	# file name
 evidenceFileName = ''	# file name
 propertyFileName = ''	# file name
 noteFileName = ''	# file name
-noteChunkFileName=  ''	# file name
 
 delByReferenceKey = 0	# deletion reference key
 annotTypeKey = 0	# VOC_AnnotType._AnnotType_key
 annotKey = 0		# VOC_Annot._Annot_key
 evidencePrimaryKey = 0	# VOC_Evidence._AnnotEvidence_key
 propertyKey = 0		# VOC_Evidence_Property._EvidenceProperty_key
-noteKey = 0		# MGI_Note._Note_key
 logicalDBKey = 1	# ACC_Accession._LogicalDB_key (default is "MGI", 1)
+noteKey = 0		# MGI_Note._Note_key
 mgiNoteObjectKey = 25	# MGI_Note._MGIType_key
 mgiNoteTypeKey = 1008	# MGI_Note._NoteType_key
 
@@ -369,7 +367,7 @@ def init():
     global inputFile, diagFile, errorFile, errorFileName, diagFileName
     global annotFile, annotFileName, evidenceFile, evidenceFileName
     global propertyFile, propertyFileName
-    global noteFile, noteFileName, noteChunkFile, noteChunkFileName
+    global noteFile, noteFileName
     global annotTypeKey, annotKey, annotTypeName, evidencePrimaryKey
     global noteKey, propertyKey
     global isMCV, isMP, isGO, isGOAmouse, isGOmousenoctua, isGOAhuman, isGOrat
@@ -388,7 +386,6 @@ def init():
     evidenceFileName = tail + '.VOC_Evidence.bcp'
     propertyFileName = tail + '.VOC_Evidence_Property.bcp'
     noteFileName = tail + '.MGI_Note.bcp'
-    noteChunkFileName = tail + '.MGI_NoteChunk.bcp'
 
     # determine load-type
 
@@ -462,11 +459,6 @@ def init():
         noteFile = open(noteFileName, 'w')
     except:
         exit(1, 'Could not open file %s\n' % noteFileName)
-            
-    try:
-        noteChunkFile = open(noteChunkFileName, 'w')
-    except:
-        exit(1, 'Could not open file %s\n' % noteChunkFileName)
             
     # Log all SQL
     db.set_sqlLogFunction(db.sqlLogAll)
@@ -758,7 +750,7 @@ def setPrimaryKeys():
     results = db.sql(''' select nextval('voc_evidence_seq') as maxKey ''', 'auto')
     evidencePrimaryKey = results[0]['maxKey']
 
-    results = db.sql('select max(_Note_key) + 1 as maxKey from MGI_Note', 'auto')
+    results = db.sql(''' select nextval('mgi_note_seq') as maxKey ''', 'auto')
     noteKey = results[0]['maxKey']
 
     results = db.sql(''' select nextval('voc_evidence_property_seq') as maxKey ''', 'auto')
@@ -1087,12 +1079,8 @@ def createEvidenceRecord(newAnnotKey, evidenceKey, referenceKey, \
     if len(notes) > 0:
 
         noteFile.write('%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
-            % (noteKey, evidencePrimaryKey, mgiNoteObjectKey, mgiNoteTypeKey, \
+            % (noteKey, evidencePrimaryKey, mgiNoteObjectKey, mgiNoteTypeKey, notes, \
                editorKey, editorKey, entryDate, entryDate))
-
-        noteChunkFile.write('%s\t1\t%s\t%s\t%s\t%s\t%s\n' \
-            % (noteKey, notes, editorKey, \
-               editorKey, entryDate, entryDate))
 
         noteKey = noteKey + 1
 
@@ -1391,7 +1379,6 @@ def bcpFiles():
     annotFile.close()
     evidenceFile.close()
     noteFile.close()
-    noteChunkFile.close()
     propertyFile.close()
 
     if DEBUG:
@@ -1420,11 +1407,6 @@ def bcpFiles():
         currentDir, noteFileName)
     diagFile.write('%s\n' % bcpNoteCmd)
 
-    bcpNoteChunkCmd = '%s %s %s %s %s %s "\\t" "\\n" mgd' % \
-        (bcpCommand, db.get_sqlServer(), db.get_sqlDatabase(),'MGI_NoteChunk',
-        currentDir, noteChunkFileName)
-    diagFile.write('%s\n' % bcpNoteChunkCmd)
-
     bcpPropertyCmd = '%s %s %s %s %s %s "\\t" "\\n" mgd' % \
         (bcpCommand, db.get_sqlServer(), db.get_sqlDatabase(),'VOC_Evidence_Property',
         currentDir, propertyFileName)
@@ -1434,7 +1416,6 @@ def bcpFiles():
     os.system(bcpAnnotCmd)
     os.system(bcpEvidenceCmd)
     os.system(bcpNoteCmd)
-    os.system(bcpNoteChunkCmd)
     os.system(bcpPropertyCmd)
     print ('BCP done')
 
@@ -1454,6 +1435,10 @@ def bcpFiles():
     execSQL = '''select setval('voc_evidence_property_seq', (select max(_EvidenceProperty_key) from VOC_Evidence_Property))'''
     print(execSQL)
     db.sql(execSQL, None)
+    db.commit()
+
+    # update mgi_note_seq auto-sequence
+    db.sql(''' select setval('mgi_note_seq', (select max(_Note_key) from MGI_Note)) ''', None)
     db.commit()
 
     # for GO/GAF annotations only...
