@@ -1068,14 +1068,7 @@ def createEvidenceRecord(newAnnotKey, evidenceKey, referenceKey, \
             % (evidencePrimaryKey, newAnnotKey, evidenceKey, referenceKey, \
                 inferredFrom, editorKey, editorKey, entryDate, entryDate))
 
-    # storing data in MGI_Note/MGI_NoteChunk
-    #
-    # note that the MGI_NoteChunk is now a 'text' field
-    # so the notes no longer need to be split into chunks
-    # therefore, the sequenceNum for any new notes will always = 1
-    # see TR12083
-    #
-
+    # storing data in MGI_Note
     if len(notes) > 0:
 
         noteFile.write('%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
