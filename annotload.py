@@ -1078,7 +1078,7 @@ def createEvidenceRecord(newAnnotKey, evidenceKey, referenceKey, \
 
     if len(notes) > 0:
 
-        noteFile.write('%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
+        noteFile.write('%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
             % (noteKey, evidencePrimaryKey, mgiNoteObjectKey, mgiNoteTypeKey, notes, \
                editorKey, editorKey, entryDate, entryDate))
 
