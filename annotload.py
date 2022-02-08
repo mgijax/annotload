@@ -1066,7 +1066,7 @@ def createEvidenceRecord(newAnnotKey, evidenceKey, referenceKey, \
 
     if isGOmousenoctua:
         # do nothing
-        print('isGOmousenoctua/do nothing')
+        print('isGOmousenoctua/do nothing/skip duplicate check')
     elif eKey in evidenceDict:
             errorFile.write('Duplicate evidence (%d): \n%s\n' % (lineNum, line))
             return
