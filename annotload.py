@@ -1431,6 +1431,8 @@ def bcpFiles():
     db.commit()
 
     # update mgi_note_seq auto-sequence
+    execSQL = '''select setval('mgi_note_seq', (select max(_Note_key) from MGI_Note))'''
+    print(execSQL)
     db.sql(''' select setval('mgi_note_seq', (select max(_Note_key) from MGI_Note)) ''', None)
     db.commit()
 
