@@ -988,7 +988,7 @@ def createEvidenceRecord(newAnnotKey, evidenceKey, referenceKey, \
 
     elif isGOmousenoctua:
 
-            # exclude the goExcludedProperties list from properties
+            # exclude the goExcludedProperties list from go_properties
             # note that *all* properties are still loaded
 
             go_properties = []
