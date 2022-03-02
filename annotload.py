@@ -1448,11 +1448,11 @@ def bcpFiles():
     db.commit()
 
     # for GO/GAF annotations only...
-    if isGO or isGOAmouse or isGOAhuman or isGOmousenoctua:
-        execSQL = '''select * from VOC_deleteGOGAFRed('%s')''' % (delByUser)
-        print(execSQL)
-        db.sql(execSQL, None)
-        db.commit()
+    #if isGO or isGOAmouse or isGOAhuman or isGOmousenoctua:
+    #    execSQL = '''select * from VOC_deleteGOGAFRed('%s')''' % (delByUser)
+    #    print(execSQL)
+    #    db.sql(execSQL, None)
+    #    db.commit()
 
 #
 # Main
