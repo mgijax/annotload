@@ -855,6 +855,7 @@ def loadDictionaries():
         value = r['_Annot_key']
         evidenceDict[key] = value
 
+#    wts2-703/per new Noctua pipeline, don't do this
 #    if isGOmousenoctua:
 #
 #        cmd = '''select e._Annot_key, e._EvidenceTerm_key, e._Refs_key, e.inferredFrom, t.term || '&=&' || p.value as property
@@ -1056,6 +1057,7 @@ def createEvidenceRecord(newAnnotKey, evidenceKey, referenceKey, \
     # evidence record may exist in our dictionary already
     # if so, it's a duplicate; let's report it
 
+    # wts2-703/per new Noctua pipeline, don't do this
     #if isGOmousenoctua:
     #    if eKey in propertyDict:
     #        errorFile.write(eKey + '\n')
@@ -1447,12 +1449,12 @@ def bcpFiles():
     db.sql(''' select setval('mgi_note_seq', (select max(_Note_key) from MGI_Note)) ''', None)
     db.commit()
 
-    # for GO/GAF annotations only...; isGOmousenoctua removed
-    if isGO or isGOAmouse or isGOAhuman:
-        execSQL = '''select * from VOC_deleteGOGAFRed('%s')''' % (delByUser)
-        print(execSQL)
-        db.sql(execSQL, None)
-        db.commit()
+    # wts2-703/per new Noctua pipeline, don't do this
+    #if isGO or isGOAmouse or isGOAhuman or isGOmousenoctua:
+    #    execSQL = '''select * from VOC_deleteGOGAFRed('%s')''' % (delByUser)
+    #    print(execSQL)
+    #    db.sql(execSQL, None)
+    #    db.commit()
 
 #
 # Main
