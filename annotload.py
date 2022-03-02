@@ -1447,8 +1447,7 @@ def bcpFiles():
     db.sql(''' select setval('mgi_note_seq', (select max(_Note_key) from MGI_Note)) ''', None)
     db.commit()
 
-    # for GO/GAF annotations only...
-    #if isGO or isGOAmouse or isGOAhuman or isGOmousenoctua:
+    # for GO/GAF annotations only...; isGOmousenoctua removed
     if isGO or isGOAmouse or isGOAhuman:
         execSQL = '''select * from VOC_deleteGOGAFRed('%s')''' % (delByUser)
         print(execSQL)
