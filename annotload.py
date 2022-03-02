@@ -276,7 +276,6 @@ referenceDict = {}	# dictionary of references for quick lookup
 annotDict = {}		# dictionary of annotation records for quick lookup
 evidenceDict = {}	# dictionary of evidence records for quick lookup
 pTermDict = {}		# dictionary of propery terms for quick lookup
-#propertyDict = {}	# dictionary of property per evidence
 
 loaddate = loadlib.loaddate
 
@@ -794,7 +793,6 @@ def loadDictionaries():
     '''
 
     global termDict, annotDict, evidenceDict, pTermDict
-    #global propertyDict
 
     # cache annotation type vocabulary
 
@@ -855,46 +853,6 @@ def loadDictionaries():
         key = '%s:%s:%s' % (r['_Annot_key'], r['_EvidenceTerm_key'], r['_Refs_key'])
         value = r['_Annot_key']
         evidenceDict[key] = value
-
-#    wts2-703/per new Noctua pipeline, don't do this
-#    if isGOmousenoctua:
-#
-#        cmd = '''select e._Annot_key, e._EvidenceTerm_key, e._Refs_key, e.inferredFrom, t.term || '&=&' || p.value as property
-#        from VOC_Evidence e, VOC_Annot a, VOC_Evidence_Property p, VOC_Term t
-#        where a._AnnotType_key = %s
-#        and a._Annot_key = e._Annot_key
-#        and e._AnnotEvidence_key = p._AnnotEvidence_key
-#        and p._PropertyTerm_key = t._Term_key
-#        and  t.term not in ('%s')
-#        ''' % (annotTypeKey, "','".join(goExcludedProperties))
-#
-#        # 
-#        # read in all properties
-#        #
-#        tmpDict = {}
-#        results = db.sql(cmd, 'auto')
-#        for r in results:
-#
-#            inferredFrom = r['inferredFrom']
-#            if inferredFrom == None:
-#                inferredFrom = ''
-#
-#            key = '%s:%s:%s:%s' % \
-#                (r['_Annot_key'], r['_EvidenceTerm_key'], r['_Refs_key'], inferredFrom)
-#            value = r['property']
-#
-#            if key not in tmpDict:
-#                tmpDict[key] = []
-#            tmpDict[key].append(value)
-#      
-#        #
-#        # join together all properties needed for duplicate check
-#        #
-#        for key in tmpDict:
-#            pKey = '&==&'.join(tmpDict[key])
-#            newKey = key + ':' + pKey
-#            value = key.split(':')[0]
-#            propertyDict[newKey] = value
 
 def loadObjectDict():
     global objectDict
@@ -987,7 +945,6 @@ def createEvidenceRecord(newAnnotKey, evidenceKey, referenceKey, \
     '''
 
     global evidencePrimaryKey, evidenceDict, noteKey, propertyKey
-    #global propertyDict
 
     #
     # make sure this is not a duplicate evidence statement
@@ -1013,12 +970,6 @@ def createEvidenceRecord(newAnnotKey, evidenceKey, referenceKey, \
     #	1) existing annotation (in the database) : see loadDictionaries/evidenceDict)
     #	(AnnotKey, evidenceKey, referenceKey)
     #
-    #   2) new annotations (from the input file) : see loadDictionaries/propertyDict)
-    #	   may be added : 'properties', 'notes', 'inferredFrom'  
-    #
-    # propertyDict is used to check for duplicates from the database + input file using:
-    #   (AnnotKey, evidenceKey, referenceKey, inferredFrom, '&==&'.join(dupcheck_properties))
-    #
 
     creationDate = entryDate
     modificationDate = entryDate
@@ -1037,10 +988,10 @@ def createEvidenceRecord(newAnnotKey, evidenceKey, referenceKey, \
 
     elif isGOmousenoctua:
 
-            # exclude the goExcludedProperties list from the duplicate check
+            # exclude the goExcludedProperties list from properties
             # note that *all* properties are still loaded
 
-            dupcheck_properties = []
+            go_properties = []
 
             allProps = str.split(properties, '&==&')
             for p in allProps:
@@ -1048,25 +999,15 @@ def createEvidenceRecord(newAnnotKey, evidenceKey, referenceKey, \
                 if pTerm == 'creation-date':
                         creationDate = pValue
                 if pTerm not in goExcludedProperties:
-                     dupcheck_properties.append(pTerm + '&=&' + pValue)
+                     go_properties.append(pTerm + '&=&' + pValue)
 
-            eKey = '%s:%s:%s:%s:%s' % (newAnnotKey, evidenceKey, referenceKey, inferredFrom, \
-                '&==&'.join(dupcheck_properties))
+            eKey = '%s:%s:%s:%s:%s' % (newAnnotKey, evidenceKey, referenceKey, inferredFrom, '&==&'.join(go_properties))
 
     else:
             eKey = '%s:%s:%s' % (newAnnotKey, evidenceKey, referenceKey)
 
     # evidence record may exist in our dictionary already
     # if so, it's a duplicate; let's report it
-
-    # wts2-703/per new Noctua pipeline, don't do this
-    #if isGOmousenoctua:
-    #    if eKey in propertyDict:
-    #        errorFile.write(eKey + '\n')
-    #        errorFile.write('Duplicate evidence/property (%d): \n%s\n' % (lineNum, line))
-    #        return
-    #    else:
-    #        propertyDict[eKey] = eKey
 
     if isGOmousenoctua:
         # do nothing
@@ -1451,13 +1392,6 @@ def bcpFiles():
     print(execSQL)
     db.sql(''' select setval('mgi_note_seq', (select max(_Note_key) from MGI_Note)) ''', None)
     db.commit()
-
-    # wts2-703/per new Noctua pipeline, don't do this
-    #if isGO or isGOAmouse or isGOAhuman or isGOmousenoctua:
-    #    execSQL = '''select * from VOC_deleteGOGAFRed('%s')''' % (delByUser)
-    #    print(execSQL)
-    #    db.sql(execSQL, None)
-    #    db.commit()
 
 #
 # Main
