@@ -276,7 +276,7 @@ referenceDict = {}	# dictionary of references for quick lookup
 annotDict = {}		# dictionary of annotation records for quick lookup
 evidenceDict = {}	# dictionary of evidence records for quick lookup
 pTermDict = {}		# dictionary of propery terms for quick lookup
-propertyDict = {}	# dictionary of property per evidence
+#propertyDict = {}	# dictionary of property per evidence
 
 loaddate = loadlib.loaddate
 
@@ -793,7 +793,8 @@ def loadDictionaries():
     #	nothing
     '''
 
-    global termDict, annotDict, evidenceDict, pTermDict, propertyDict
+    global termDict, annotDict, evidenceDict, pTermDict
+    #global propertyDict
 
     # cache annotation type vocabulary
 
@@ -985,7 +986,8 @@ def createEvidenceRecord(newAnnotKey, evidenceKey, referenceKey, \
     #
     '''
 
-    global evidencePrimaryKey, evidenceDict, propertyDict, noteKey, propertyKey
+    global evidencePrimaryKey, evidenceDict, noteKey, propertyKey
+    #global propertyDict
 
     #
     # make sure this is not a duplicate evidence statement
@@ -1069,6 +1071,7 @@ def createEvidenceRecord(newAnnotKey, evidenceKey, referenceKey, \
     if isGOmousenoctua:
         # do nothing
         print('isGOmousenoctua/do nothing/skip duplicate check')
+
     elif eKey in evidenceDict:
             errorFile.write('Duplicate evidence (%d): \n%s\n' % (lineNum, line))
             return
