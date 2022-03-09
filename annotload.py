@@ -1275,7 +1275,10 @@ def processFile():
         qualifierKey = vocabloadlib.verifyQualifier(qualifier, annotTypeKey, 0, lineNum, errorFile)
         editorKey = loadlib.verifyUser(editor, lineNum, errorFile)
 
-        if termKey == 0 or objectKey == 0 or \
+        if logicalDBKey == 2:
+
+        if termKey == 0 or 
+            objectKey == 0 or \
             referenceKey == 0 or \
             evidenceKey == 0 or \
             qualifierKey == 0 or \
@@ -1392,6 +1395,12 @@ def bcpFiles():
     print(execSQL)
     db.sql(''' select setval('mgi_note_seq', (select max(_Note_key) from MGI_Note)) ''', None)
     db.commit()
+
+    if isGO or isGOAmouse or isGOAhuman or isGOmousenoctua or isGOrat:
+        execSQL = '''select * from VOC_deleteGOWithdrawn()'''
+        print(execSQL)
+        db.sql(execSQL, None)
+        db.commit()
 
 #
 # Main
