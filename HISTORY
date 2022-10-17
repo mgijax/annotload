@@ -1,3 +1,9 @@
+TAG: annotload-6-0-22-1
+DATE: 10/17/2022
+STAFF: lec
+wts2-1012/Allele Rollup not including all back-references
+add duplicate checks:  isMPAllele, isDiseaseAllele 
+
 TAG: annotload-6-0-18-2
 DATE: 03/23/2022
 STAFF: lec

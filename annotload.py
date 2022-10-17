@@ -303,11 +303,13 @@ isGOAhuman = 0
 # true (1) if this is a GO Rat Load
 isGOrat = 0
 
-# true (1) if this is a disease/marker rollup load
+# true (1) if this is a disease/marker, disease/allele rollup load
 isDiseaseMarker = 0
+isDiseaseAllele = 0
 
-# true (1) if this is an MP/marker rollup load
+# true (1) if this is an MP/marker, MP/allele rollup load
 isMPMarker = 0
+isMPAllele = 0
 
 # true (1) if this is an OMIM/HPO load
 isOMIMHPO = 0
@@ -370,7 +372,7 @@ def init():
     global annotTypeKey, annotKey, annotTypeName, evidencePrimaryKey
     global noteKey, propertyKey
     global isMCV, isMP, isGO, isGOAmouse, isGOmousenoctua, isGOAhuman, isGOrat
-    global isDiseaseMarker, isMPMarker, isOMIMHPO
+    global isDiseaseMarker, isDiseaseAllele, isMPMarker, isMPAllele, isOMIMHPO
     global loadType
 
     db.useOneConnection(1)
@@ -417,8 +419,14 @@ def init():
         elif loadType == 'diseaseMarker':
             isDiseaseMarker = 1
         
+        elif loadType == 'diseaseAllele':
+            isDiseaseAllele = 1
+
         elif loadType == 'mpMarker':
             isMPMarker = 1
+
+        elif loadType == 'mpAllele':
+            isMPAllele = 1
 
         elif loadType == 'omimhpo':
             print('isOMIMHPO')
@@ -977,10 +985,10 @@ def createEvidenceRecord(newAnnotKey, evidenceKey, referenceKey, \
     if isMP or isOMIMHPO:
             eKey = '%s:%s:%s:%s' % (newAnnotKey, evidenceKey, referenceKey, properties)
 
-    elif isMPMarker:
+    elif isMPMarker or isMPAllele:
             eKey = '%s:%s:%s:%s:%s' % (newAnnotKey, evidenceKey, referenceKey, properties, notes)
 
-    elif isDiseaseMarker or isMPMarker:
+    elif isDiseaseMarker or isDiseaseAllele:
             eKey = '%s:%s:%s:%s:%s' % (newAnnotKey, evidenceKey, referenceKey, properties, inferredFrom)
 
     elif isGOAmouse or isGOAhuman or isGOrat:
