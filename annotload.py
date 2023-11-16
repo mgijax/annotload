@@ -2,25 +2,19 @@
 #
 # Purpose:
 #
-#    To load Annotations for the specified Vocabulary and MGI Object
-#    into the VOC Annotation structures:
+#    To load Annotations for the specified Vocabulary and MGI Object into the VOC Annotation structures:
 #
 #    VOC_Annot
 #    VOC_Evidence
 #    VOC_Evidence_Property (TR10044)
 #
-#    See TR 2867.
-#
 # Assumes:
 #
-#    That the Annotation Type (VOC_AnnotType) record already exists
-#    for the specified Vocabulary and MGI Object.
+#    That the Annotation Type (VOC_AnnotType) record already exists for the specified Vocabulary and MGI Object.
 #
 #    That no one else is adding Annotations to the database.
 #
-#    Usage: annotload.py [mcv|go]
-#       if this is the mcv annotation load pass the string 'mcv'
-#       if this is a go annotation load pass the string 'go'
+#    Usage: annotload.py [mcv|mp|go|diseaseMarker|diseaseAllele|mpMarker|mpAllele|omimhpo]
 #
 # Input:
 #
@@ -143,71 +137,11 @@
 #
 # History:
 #
+# lec   11/16/2023
+#       wts2-1155/GOC taking over GOA mouse, GOA human, etc.
+#
 # sc	04/24/2017
 #	- TR12556 - remove call to ALL_postMP
-#
-# lec	12/8/2015
-#	- TR12070/12011/fix for postgres/isMP
-#
-# pf	05/15/2015
-#	- sybase to postgres conversion work
-#
-# jsb	08/18/2014
-#	- added handling for isDiseaseMarker and isMPMarker rollup annotations
-#
-# lec	01/06/2014
-#	- TR11518/add field 8/Inferred-From as duplicate check
-#
-# lec	09/17/2012
-#	- TR10273-branch; add 'isMP';createEvidenceRecord()
-#
-# lec	02/16/2011
-#	- moved "properties = ''" up so that the variable is always set
-#	  even if it is not used
-#	- added some blank lines for read-ability
-#
-# sc	02/11/2011
-#	- ANNOTPROPERTY optional
-#	- tweaked code so properties are not required
-#	- max 80 column lines in code
-#
-# lec   11/04/2010
-#       - TR10044/GO Notes; VOC_Evidence_Property
-#
-# lec   10/12/2010
-#       - TR10393/added 'UniProtKB'
-#
-# sc  08/18/2010
-#       - TR6839; added processMcvFile() and optional 'mcv' parameter
-#       - additional commenting and ability to have > 10 fields but ignore them
-#         i.e. if > 10 then get field 10 which is ldb
-#       - removed unused 'ecodes' dictionary
-#
-# lec   07/21/2010
-#       - TR9962/added 'RefGenome' to VOC_deleteGOGAFRed
-#
-# lec   06/09/2010
-#       - TR10109; exec VOC_deleteGOGAFRed
-#
-# lec   10/02/2006
-#       - add option to delete records by a specified User.
-#           Deletion by a Reference is checked first.
-#
-# lec   10/04/2005
-#       - TR 5188; replace isNot with _Qualifier_key in VOC_Annot.
-#
-# lec   01/28/2004
-#       - TR 3404/JSAM
-#
-# lec   06/14/2002
-#       - TR 3744 - added -O option to allow load of annotations obsolete terms
-#               (the default is to allow load of annotations to obsolete terms)
-#
-# lec   05/28/2002
-#       - TR 3724; fix deletion (add deletion of orphan VOC_Annot records)
-#
-# lec   01/22/2002
-#       - created
 #
 '''
 
@@ -219,15 +153,12 @@ import accessionlib
 import mgi_utils
 import loadlib
 import vocabloadlib
-import reportlib
-import go_annot_extensions
 
 #db.setTrace(True)
 
 # globals
 
 # from configuration file
-
 user = os.environ['PG_DBUSER']
 passwordFileName = os.environ['PG_1LINE_PASSFILE']
 mode = os.environ['ANNOTMODE']
@@ -288,20 +219,8 @@ isMCV = 0
 # true (1) if this is a MP load
 isMP = 0
 
-# true (1) if this is a GO load
+# true (1) if this is a goload
 isGO = 0
-
-# true (1) if this is a GOA Mouse load
-isGOAmouse = 0
-
-# true (1) if this is a GOA Mouse Noctua load
-isGOmousenoctua = 0
-
-# true (1) if this is a GOA Human Load
-isGOAhuman = 0
-
-# true (1) if this is a GO Rat Load
-isGOrat = 0
 
 # true (1) if this is a disease/marker, disease/allele rollup load
 isDiseaseMarker = 0
@@ -316,13 +235,6 @@ isOMIMHPO = 0
 
 # true (1) if no bcp files to load
 skipBCP = 1
-
-# properties to exclude from GO duplication check
-# 'gene product' must be included in the duplicate check
-# so it is removed from the exclude list
-goExcludedProperties = go_annot_extensions._EXCLUDED_TERMS
-goExcludedProperties.remove('gene product')
-goExcludedProperties.remove('evidence')
 
 def exit(status, message = None):
     '''
@@ -371,8 +283,7 @@ def init():
     global noteFile, noteFileName
     global annotTypeKey, annotKey, annotTypeName, evidencePrimaryKey
     global noteKey, propertyKey
-    global isMCV, isMP, isGO, isGOAmouse, isGOmousenoctua, isGOAhuman, isGOrat
-    global isDiseaseMarker, isDiseaseAllele, isMPMarker, isMPAllele, isOMIMHPO
+    global isMCV, isMP, isGO, isDiseaseMarker, isDiseaseAllele, isMPMarker, isMPAllele, isOMIMHPO
     global loadType
 
     db.useOneConnection(1)
@@ -404,18 +315,6 @@ def init():
         elif loadType == 'go':
             isGO = 1
 
-        elif loadType == 'goamouse':
-            isGOAmouse = 1
-
-        elif loadType == 'gomousenoctua':
-            isGOmousenoctua = 1
-
-        elif loadType == 'goahuman':
-            isGOAhuman = 1
-
-        elif loadType == 'gorat':
-            isGOrat = 1
-        
         elif loadType == 'diseaseMarker':
             isDiseaseMarker = 1
         
@@ -429,7 +328,6 @@ def init():
             isMPAllele = 1
 
         elif loadType == 'omimhpo':
-            print('isOMIMHPO')
             isOMIMHPO = 1
         
     try:
@@ -503,9 +401,7 @@ def verifyAnnotType():
 
     annotTypeName = re.sub('"', '', annotTypeName)
 
-    results = db.sql('''
-        select _AnnotType_key from VOC_AnnotType where name = '%s' 
-        ''' % (annotTypeName), 'auto')
+    results = db.sql(''' select _AnnotType_key from VOC_AnnotType where name = '%s' ''' % (annotTypeName), 'auto')
 
     if len(results) == 0:
         exit(1, 'Invalid Annotation Type Name: %s\n' % (annotTypeName))
@@ -542,9 +438,10 @@ def verifyMode():
 
         if delByReference != "J:0":
 
-            #print ('\nannotload.py - verifyMode - delByReference: %s, %s' % (delByReference, delByReferenceKey))
+            #print('\nannotload.py - verifyMode - delByReference: %s, %s' % (delByReference, delByReferenceKey))
 
-            db.sql('''create temp table toDelete as 
+            db.sql('''
+                create temp table toDelete as 
                 select e._Annot_key, e._AnnotEvidence_key 
                 from VOC_Annot a, VOC_Evidence e
                 where e._Refs_key = %s
@@ -557,15 +454,18 @@ def verifyMode():
             db.sql('create index td_idx2 on toDelete(_AnnotEvidence_key)', None)
             db.commit()
             
-            db.sql('''delete from VOC_Evidence_Property p
+            db.sql('''
+                delete from VOC_Evidence_Property p
                 using toDelete d
                 where d._AnnotEvidence_key = p._AnnotEvidence_key''', None, execute = not DEBUG)
 
-            db.sql('''delete from VOC_Evidence e
+            db.sql('''
+                delete from VOC_Evidence e
                 using toDelete d
                 where d._AnnotEvidence_key = e._AnnotEvidence_key''', None, execute = not DEBUG)
 
-            db.sql('''delete from VOC_Annot a
+            db.sql('''
+                delete from VOC_Annot a
                 using toDelete d
                 where d._Annot_key = a._Annot_key
                 and not exists (select 1 from VOC_Evidence e
@@ -573,7 +473,8 @@ def verifyMode():
 
             # remove the Used-FC references
             if isMP:
-                db.sql('''delete from MGI_Reference_Assoc
+                db.sql('''
+                    delete from MGI_Reference_Assoc
                     where _MGIType_key = 11
                     and _Refs_key = %s
                     and _RefAssocType_key = 1017''' % (delByReferenceKey), None, execute = not DEBUG)
@@ -588,7 +489,8 @@ def verifyMode():
             # variable.  (so this code was always getting executed, even when
             # the config file had the DELETEUSER set to 'none') - jsb, 11/3/14
 
-            db.sql('''select e._Annot_key, e._AnnotEvidence_key into temp toDelete 
+            db.sql('''
+                select e._Annot_key, e._AnnotEvidence_key into temp toDelete 
                 from VOC_Annot a, VOC_Evidence e, MGI_User u 
                 where e._CreatedBy_key = u._User_key 
                 and u.login like '%s'
@@ -599,26 +501,28 @@ def verifyMode():
             db.sql('create index td2_idx1 on toDelete(_Annot_key)', None)
             db.sql('create index td2_idx2 on toDelete(_AnnotEvidence_key)', None)
 
-            db.sql('''delete from VOC_Evidence_Property  p
+            db.sql('''
+                delete from VOC_Evidence_Property  p
                 using toDelete d
                 where d._AnnotEvidence_key = p._AnnotEvidence_key''', None, execute = not DEBUG)
 
-            db.sql('''delete from VOC_Evidence e using toDelete d
+            db.sql('''
+                delete from VOC_Evidence e using toDelete d
                 where d._AnnotEvidence_key = e._AnnotEvidence_key''', None, execute = not DEBUG)
 
-            db.sql('''delete from VOC_Annot a using toDelete d
-                  where d._Annot_key = a._Annot_key
-                  and not exists (select 1 from VOC_Evidence e
-                  where d._Annot_key = e._Annot_key)
-                  ''', None, execute = not DEBUG)
+            db.sql('''
+                delete from VOC_Annot a using toDelete d
+                where d._Annot_key = a._Annot_key
+                and not exists (select 1 from VOC_Evidence e
+                where d._Annot_key = e._Annot_key)
+                ''', None, execute = not DEBUG)
 
             db.sql('''drop table todelete''', None)
             db.commit()
 
         else:
-            db.sql('''delete from VOC_Annot 
-                where _AnnotType_key = %s
-                ''' % (annotTypeKey), None, execute = not DEBUG)
+            db.sql('''delete from VOC_Annot where _AnnotType_key = %s ''' % (annotTypeKey), None, execute = not DEBUG)
+            db.commit()
 
     elif mode == 'append':
         pass
@@ -829,9 +733,6 @@ def loadDictionaries():
         from VOC_Term
         where _Vocab_key in (%s)
         ''' % (annotProperty)
-    # hack for GO
-    if isGOmousenoctua:
-        cmd += " and term not in ('creation-date')"
     results = db.sql(cmd, 'auto')
 
     for r in results:
@@ -851,7 +752,8 @@ def loadDictionaries():
 
     # cache evidence keys for this type of annotation
 
-    cmd = '''select e._Annot_key, e._EvidenceTerm_key, e._Refs_key 
+    cmd = '''
+        select e._Annot_key, e._EvidenceTerm_key, e._Refs_key 
         from VOC_Evidence e, VOC_Annot a
         where a._AnnotType_key = %s
         and a._Annot_key = e._Annot_key''' % (annotTypeKey)
@@ -864,10 +766,13 @@ def loadDictionaries():
 
 def loadObjectDict():
     global objectDict
+
     # cache object keys
+
     print('ldb: %s, annotType: %s' % (logicalDBKey, annotTypeKey))
 
-    results = db.sql('''select a.accID, a._Object_key
+    results = db.sql('''
+        select a.accID, a._Object_key
         from ACC_Accession a, VOC_AnnotType t
         where a._LogicalDB_key = %s
         and a.preferred = 1
@@ -955,32 +860,9 @@ def createEvidenceRecord(newAnnotKey, evidenceKey, referenceKey, \
     global evidencePrimaryKey, evidenceDict, noteKey, propertyKey
 
     #
-    # make sure this is not a duplicate evidence statement
-    #
-    # TR11674 - added handling for isDiseaseMarker and isMPMarker
-    #
-    # TR11518
-    #	added isGOAmouse to 'properties' and 'inferredFrom' (same as isGOAhuman and isGOrat)
-    #
-    # TR10273
-    # 	if isMP, add 'properties' to eKey (unique-ness)
-    # 
-    # TR6519/N2MO
-    # 	if isGOAhuman/isGOrat, add 'properties' and entryDate to eKey to determine uniqueness
-    # 	goahumanload is delete/reload, so this detects only dups in the input file
-    #
-
-    #
-    # NOTE:
-    #
     # evidenceDict is used to check for duplicates:
-    #
     #	1) existing annotation (in the database) : see loadDictionaries/evidenceDict)
-    #	(AnnotKey, evidenceKey, referenceKey)
     #
-
-    creationDate = entryDate
-    modificationDate = entryDate
 
     if isMP or isOMIMHPO:
             eKey = '%s:%s:%s:%s' % (newAnnotKey, evidenceKey, referenceKey, properties)
@@ -988,40 +870,16 @@ def createEvidenceRecord(newAnnotKey, evidenceKey, referenceKey, \
     elif isMPMarker or isMPAllele:
             eKey = '%s:%s:%s:%s:%s' % (newAnnotKey, evidenceKey, referenceKey, properties, notes)
 
-    elif isDiseaseMarker or isDiseaseAllele:
+    elif isGO or isDiseaseMarker or isDiseaseAllele:
             eKey = '%s:%s:%s:%s:%s' % (newAnnotKey, evidenceKey, referenceKey, properties, inferredFrom)
 
-    elif isGOAmouse or isGOAhuman or isGOrat:
-            eKey = '%s:%s:%s:%s:%s' % (newAnnotKey, evidenceKey, referenceKey, inferredFrom, properties)
-
-    elif isGOmousenoctua:
-
-            # exclude the goExcludedProperties list from go_properties
-            # note that *all* properties are still loaded
-
-            go_properties = []
-
-            allProps = str.split(properties, '&==&')
-            for p in allProps:
-                pTerm, pValue = str.split(p,'&=&')
-                if pTerm == 'creation-date':
-                        creationDate = pValue
-                if pTerm not in goExcludedProperties:
-                     go_properties.append(pTerm + '&=&' + pValue)
-
-            eKey = '%s:%s:%s:%s:%s' % (newAnnotKey, evidenceKey, referenceKey, inferredFrom, '&==&'.join(go_properties))
-
+    # default duplication check
     else:
             eKey = '%s:%s:%s' % (newAnnotKey, evidenceKey, referenceKey)
 
     # evidence record may exist in our dictionary already
     # if so, it's a duplicate; let's report it
-
-    if isGOmousenoctua:
-        # do nothing
-        print('isGOmousenoctua/do nothing/skip duplicate check')
-
-    elif eKey in evidenceDict:
+    if eKey in evidenceDict:
             errorFile.write('Duplicate evidence (%d): \n%s\n' % (lineNum, line))
             return
 
@@ -1031,7 +889,7 @@ def createEvidenceRecord(newAnnotKey, evidenceKey, referenceKey, \
 
     evidenceFile.write('%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
             % (evidencePrimaryKey, newAnnotKey, evidenceKey, referenceKey, \
-                inferredFrom, editorKey, editorKey, creationDate, modificationDate))
+                inferredFrom, editorKey, editorKey, entryDate, entryDate))
 
     # storing data in MGI_Note
     if len(notes) > 0:
@@ -1065,14 +923,13 @@ def createEvidenceRecord(newAnnotKey, evidenceKey, referenceKey, \
 
             for p in allProps:
 
-                #print properties
+                #printproperties
                 pTerm, pValue = str.split(p,'&=&')
 
                 if pTerm in pTermDict:
                     propertyFile.write('%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
-                    % (propertyKey, evidencePrimaryKey, pTermDict[pTerm], \
-                       stanza, seqnum, pValue, editorKey, editorKey, \
-                       creationDate, modificationDate))
+                    % (propertyKey, evidencePrimaryKey, pTermDict[pTerm], stanza, seqnum, pValue, \
+                       editorKey, editorKey, entryDate, entryDate))
 
                     seqnum = seqnum + 1
                     propertyKey = propertyKey + 1
@@ -1130,8 +987,7 @@ def processMcvFile():
             properties = ''
 
             if len(tokens) > 9:
-                # field  10 reserved for optional ldb
-                # the default is "1" (MGI)
+                # field 10 reserved for optional ldb the default is "1" (MGI)
                 col10 = accessionlib.get_LogicalDB_key(tokens[9])
                 if col10 != None:
                     logicalDBKey = col10
@@ -1254,12 +1110,9 @@ def processFile():
             properties = ''
 
             if len(tokens) > 9:
-                # field  10 reserved for optional ldb
+                # field 10 reserved for optional ldb
                 # the default is "1" (MGI)
-                #print tokens[9]
-
                 col10 = accessionlib.get_LogicalDB_key(str.strip(tokens[9]))
-                #print col10
 
                 if col10 != None:
                     logicalDBKey = col10
@@ -1371,12 +1224,12 @@ def bcpFiles():
         currentDir, propertyFileName)
     diagFile.write('%s\n' % bcpPropertyCmd)
 
-    print ('BCPing files')
+    print('BCPing files')
     os.system(bcpAnnotCmd)
     os.system(bcpEvidenceCmd)
     os.system(bcpNoteCmd)
     os.system(bcpPropertyCmd)
-    print ('BCP done')
+    print('BCP done')
 
     # update voc_annot_seq auto-sequence
     execSQL = '''select setval('voc_annot_seq', (select max(_Annot_key) from VOC_Annot))'''
@@ -1402,38 +1255,31 @@ def bcpFiles():
     db.sql(''' select setval('mgi_note_seq', (select max(_Note_key) from MGI_Note)) ''', None)
     db.commit()
 
-    # delete any go-annotations that are using withdrawn markers
-    if isGO or isGOAmouse or isGOAhuman or isGOmousenoctua or isGOrat:
-        execSQL = '''select * from VOC_deleteGOWithdrawn()'''
-        print(execSQL)
-        db.sql(execSQL, None)
-        db.commit()
-
 #
 # Main
 #
 
-print ('\nannotload.py - main() started')
+print('\nannotload.py - main() started')
 
-#print ('\nannotload.py - init')
+#print('\nannotload.py - init')
 init()
 
-#print ('\nannotload.py - verifyAnnotType')
+#print('\nannotload.py - verifyAnnotType')
 verifyAnnotType()
 
-#print ('\nannotload.py - loadReferenceDictionary')
+#print('\nannotload.py - loadReferenceDictionary')
 loadReferenceDictionary()
 
-#print ('\nannotload.py - verifyMode')
+#print('\nannotload.py - verifyMode')
 verifyMode()
 
-#print ('\nannotload.py - setPrimaryKeys')
+#print('\nannotload.py - setPrimaryKeys')
 setPrimaryKeys()
 
-#print ('\nannotload.py - loadDictionary')
+#print('\nannotload.py - loadDictionary')
 loadDictionaries()
 
-#print ('\nannotload.py - process')
+#print('\nannotload.py - process')
 if isMCV:
     processMcvFile()
 else:
@@ -1441,4 +1287,4 @@ else:
 
 bcpFiles()
 
-print ('\nannotload.py - main() finished')
+print('\nannotload.py - main() finished')
