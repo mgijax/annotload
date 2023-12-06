@@ -152,6 +152,9 @@ import db
 import accessionlib
 import mgi_utils
 import loadlib
+
+libpath = os.environ['ANNOTLOAD'] + '/lib'
+sys.path.insert(0, libpath)
 import vocabloadlib
 
 #db.setTrace(True)
