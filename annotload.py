@@ -433,11 +433,6 @@ def verifyMode():
 
         # verify deletion reference
 
-        # disable the triggers so this goes faster
-        db.sql('''ALTER TABLE mgd.VOC_Annot DISABLE TRIGGER USER;''', None)
-        db.sql('''ALTER TABLE mgd.VOC_Evidence DISABLE TRIGGER USER;''', None)
-        db.sql('''ALTER TABLE mgd.VOC_Evidence_Property DISABLE TRIGGER USER;''', None)
-
         #
         # create temp table toDelete
         #
@@ -518,12 +513,6 @@ def verifyMode():
         db.sql('''drop table todelete''', None)
         db.commit()
             
-        # re-enable the triggers
-        db.sql('''ALTER TABLE mgd.VOC_Annot ENABLE TRIGGER USER;''', None)
-        db.sql('''ALTER TABLE mgd.VOC_Evidence ENABLE TRIGGER USER;''', None)
-        db.sql('''ALTER TABLE mgd.VOC_Evidence_Property ENABLE TRIGGER USER;''', None)
-        db.commit()
-
     elif mode == 'append':
         pass
 
