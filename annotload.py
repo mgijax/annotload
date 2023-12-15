@@ -64,18 +64,15 @@
 #
 #    processing modes:
 #       new - delete the Annots for the given Reference or User, and Annot Type.
-#           if reference = 0 and user is none, then delete all Annots of the
-#               specified Annot Type
+#           if reference = 0 and user is none, then delete all Annots of the specified Annot Type
 #
 #       append - add Annots from the input file
 #           (does not check for duplicates)
 #
 #       preview - perform all record verifications but do not load the data or
-#           make any changes to the database. Used for testing or to preview
-#           the load.
+#           make any changes to the database. Used for testing or to preview the load.
 #
-#       delete - delete the Annots for the given Reference or User, and
-#           Annot Type.
+#       delete - delete the Annots for the given Reference or User, and Annot Type.
 #
 # Output:
 #
@@ -157,7 +154,7 @@ libpath = os.environ['ANNOTLOAD'] + '/lib'
 sys.path.insert(0, libpath)
 import vocabloadlib
 
-#db.setTrace(True)
+db.setTrace(True)
 
 # globals
 
@@ -263,7 +260,6 @@ def exit(status, message = None):
     except:
         pass
 
-    db.useOneConnection(0)
     sys.exit(status)
  
 def init():
@@ -289,7 +285,6 @@ def init():
     global isMCV, isMP, isGO, isDiseaseMarker, isDiseaseAllele, isMPMarker, isMPAllele, isOMIMHPO
     global loadType
 
-    db.useOneConnection(1)
     db.set_sqlUser(user)
     db.set_sqlPasswordFromFile(passwordFileName)
 
@@ -439,10 +434,14 @@ def verifyMode():
 
         # verify deletion reference
 
+        db.sql('''ALTER TABLE mgd.VOC_Annot DISABLE TRIGGER USER;''', None)
+        db.sql('''ALTER TABLE mgd.VOC_Evidence DISABLE TRIGGER USER;''', None)
+        db.sql('''ALTER TABLE mgd.VOC_Evidence_Property DISABLE TRIGGER USER;''', None)
+
+        #
+        # create temp table toDelete
+        #
         if delByReference != "J:0":
-
-            #print('\nannotload.py - verifyMode - delByReference: %s, %s' % (delByReference, delByReferenceKey))
-
             db.sql('''
                 create temp table toDelete as 
                 select e._Annot_key, e._AnnotEvidence_key 
@@ -451,40 +450,6 @@ def verifyMode():
                 and e._Annot_key = a._Annot_key 
                 and a._AnnotType_key = %s
                 ''' % (delByReferenceKey, annotTypeKey), None, execute = not DEBUG)
-            db.commit()
-
-            db.sql('create index td_idx1 on toDelete(_Annot_key)', None)
-            db.sql('create index td_idx2 on toDelete(_AnnotEvidence_key)', None)
-            db.commit()
-            
-            db.sql('''
-                delete from VOC_Evidence_Property p
-                using toDelete d
-                where d._AnnotEvidence_key = p._AnnotEvidence_key''', None, execute = not DEBUG)
-
-            db.sql('''
-                delete from VOC_Evidence e
-                using toDelete d
-                where d._AnnotEvidence_key = e._AnnotEvidence_key''', None, execute = not DEBUG)
-
-            db.sql('''
-                delete from VOC_Annot a
-                using toDelete d
-                where d._Annot_key = a._Annot_key
-                and not exists (select 1 from VOC_Evidence e
-                where d._Annot_key = e._Annot_key)''', None, execute = not DEBUG)
-
-            # remove the Used-FC references
-            if isMP:
-                db.sql('''
-                    delete from MGI_Reference_Assoc
-                    where _MGIType_key = 11
-                    and _Refs_key = %s
-                    and _RefAssocType_key = 1017''' % (delByReferenceKey), None, execute = not DEBUG)
-
-            db.sql('''drop table todelete''', None)
-            db.commit()
-            
 
         elif delByUser != "none%":
             # updated this to include the wildcard at the end of the comparison
@@ -493,7 +458,8 @@ def verifyMode():
             # the config file had the DELETEUSER set to 'none') - jsb, 11/3/14
 
             db.sql('''
-                select e._Annot_key, e._AnnotEvidence_key into temp toDelete 
+                create temp table toDelete as 
+                select e._Annot_key, e._AnnotEvidence_key
                 from VOC_Annot a, VOC_Evidence e, MGI_User u 
                 where e._CreatedBy_key = u._User_key 
                 and u.login like '%s'
@@ -501,31 +467,62 @@ def verifyMode():
                 and a._AnnotType_key = %s
                 ''' % (delByUser, annotTypeKey), None, execute = not DEBUG)
 
-            db.sql('create index td2_idx1 on toDelete(_Annot_key)', None)
-            db.sql('create index td2_idx2 on toDelete(_AnnotEvidence_key)', None)
-
-            db.sql('''
-                delete from VOC_Evidence_Property  p
-                using toDelete d
-                where d._AnnotEvidence_key = p._AnnotEvidence_key''', None, execute = not DEBUG)
-
-            db.sql('''
-                delete from VOC_Evidence e using toDelete d
-                where d._AnnotEvidence_key = e._AnnotEvidence_key''', None, execute = not DEBUG)
-
-            db.sql('''
-                delete from VOC_Annot a using toDelete d
-                where d._Annot_key = a._Annot_key
-                and not exists (select 1 from VOC_Evidence e
-                where d._Annot_key = e._Annot_key)
-                ''', None, execute = not DEBUG)
-
-            db.sql('''drop table todelete''', None)
-            db.commit()
-
         else:
-            db.sql('''delete from VOC_Annot where _AnnotType_key = %s ''' % (annotTypeKey), None, execute = not DEBUG)
-            db.commit()
+            db.sql('''
+                create temp table toDelete as 
+                select e._Annot_key, e._AnnotEvidence_key 
+                from VOC_Annot a, VOC_Evidence e
+                where a._AnnotType_key = %s
+                and a._Annot_key = e._Annot_key 
+                ''' % (annotTypeKey), None, execute = not DEBUG)
+
+        db.sql('create index td_idx1 on toDelete(_Annot_key)', None)
+        db.sql('create index td_idx2 on toDelete(_AnnotEvidence_key)', None)
+            
+        db.sql('''
+            delete from MGI_Note n
+            using toDelete d, VOC_Evidence_Property p
+            where d._AnnotEvidence_key = p._AnnotEvidence_key
+            and p._EvidenceProperty_key = n._Object_key 
+            and n._MGIType_key = 41
+            ''', None, execute = not DEBUG)
+
+        db.sql('''
+            delete from VOC_Evidence_Property p
+            using toDelete d
+            where d._AnnotEvidence_key = p._AnnotEvidence_key
+            ''', None, execute = not DEBUG)
+
+        db.sql('''
+            delete from VOC_Evidence e
+            using toDelete d
+            where d._AnnotEvidence_key = e._AnnotEvidence_key
+            ''', None, execute = not DEBUG)
+
+        db.sql('''
+            delete from VOC_Annot a
+            using toDelete d
+            where d._Annot_key = a._Annot_key
+            and not exists (select 1 from VOC_Evidence e
+            where d._Annot_key = e._Annot_key)
+            ''', None, execute = not DEBUG)
+
+        # remove the Used-FC references
+        if isMP:
+            db.sql('''
+                delete from MGI_Reference_Assoc
+                where _MGIType_key = 11
+                and _Refs_key = %s
+                and _RefAssocType_key = 1017
+                ''' % (delByReferenceKey), None, execute = not DEBUG)
+
+        db.sql('''drop table todelete''', None)
+        db.commit()
+            
+        db.sql('''ALTER TABLE mgd.VOC_Annot ENABLE TRIGGER USER;''', None)
+        db.sql('''ALTER TABLE mgd.VOC_Evidence ENABLE TRIGGER USER;''', None)
+        db.sql('''ALTER TABLE mgd.VOC_Evidence_Property ENABLE TRIGGER USER;''', None)
+        db.commit()
 
     elif mode == 'append':
         pass
