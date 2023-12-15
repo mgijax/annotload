@@ -7,13 +7,12 @@
 #    VOC_Annot
 #    VOC_Evidence
 #    VOC_Evidence_Property (TR10044)
+#    MGI_Note (_mgitype_key = 41 used by goload/bin/go_annot_extensions_display.sh go_isoforms_display.sh
 #
 # Assumes:
 #
 #    That the Annotation Type (VOC_AnnotType) record already exists for the specified Vocabulary and MGI Object.
-#
 #    That no one else is adding Annotations to the database.
-#
 #    Usage: annotload.py [mcv|mp|go|diseaseMarker|diseaseAllele|mpMarker|mpAllele|omimhpo]
 #
 # Input:
@@ -154,7 +153,7 @@ libpath = os.environ['ANNOTLOAD'] + '/lib'
 sys.path.insert(0, libpath)
 import vocabloadlib
 
-db.setTrace(True)
+#db.setTrace(True)
 
 # globals
 
@@ -434,6 +433,7 @@ def verifyMode():
 
         # verify deletion reference
 
+        # disable the triggers so this goes faster
         db.sql('''ALTER TABLE mgd.VOC_Annot DISABLE TRIGGER USER;''', None)
         db.sql('''ALTER TABLE mgd.VOC_Evidence DISABLE TRIGGER USER;''', None)
         db.sql('''ALTER TABLE mgd.VOC_Evidence_Property DISABLE TRIGGER USER;''', None)
@@ -503,8 +503,7 @@ def verifyMode():
             delete from VOC_Annot a
             using toDelete d
             where d._Annot_key = a._Annot_key
-            and not exists (select 1 from VOC_Evidence e
-            where d._Annot_key = e._Annot_key)
+            and not exists (select 1 from VOC_Evidence e where d._Annot_key = e._Annot_key)
             ''', None, execute = not DEBUG)
 
         # remove the Used-FC references
@@ -519,6 +518,7 @@ def verifyMode():
         db.sql('''drop table todelete''', None)
         db.commit()
             
+        # re-enable the triggers
         db.sql('''ALTER TABLE mgd.VOC_Annot ENABLE TRIGGER USER;''', None)
         db.sql('''ALTER TABLE mgd.VOC_Evidence ENABLE TRIGGER USER;''', None)
         db.sql('''ALTER TABLE mgd.VOC_Evidence_Property ENABLE TRIGGER USER;''', None)
