@@ -48,14 +48,13 @@
 #       field 11 GO examples:
 #
 #       one stanza, one property/value pair:
-#           gene product&=&UniProtKB:P12023
+#           term&=&UniProtKB:P12023
 #
 #       one stanza, two property/value pair:
-#           gene product&=&UniProtKB:P12023&==&external ref&=&PMID:2834384|EXP
+#           term&=&UniProtKB:P12023&==&external ref&=&PMID:2834384|EXP
 #
 #       two stanza, two property/value pair:
-#           gene product&=&UniProtKB:P12023&==&external ref&=&PMID:2834384|EXP \
-#       &===&gene product&=&UniProtKB:P12023&==&external ref&=&PMID:2834384|EXP
+#           term&=&UniProtKB:P12023&==&external ref&=&PMID:2834384|EXP&===&term&=&UniProtKB:P12023&==&external ref&=&PMID:2834384|EXP
 #
 #	field 12+ may be used by curators and this load should ignore
 #
