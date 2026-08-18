@@ -147,10 +147,6 @@ import db
 import mgi_utils
 import loadlib
 
-libpath = os.environ['ANNOTLOAD'] + '/lib'
-sys.path.insert(0, libpath)
-import vocabloadlib
-
 #db.setTrace(True)
 
 # globals
@@ -204,7 +200,10 @@ referenceDict = {}	# dictionary of references for quick lookup
 annotDict = {}		# dictionary of annotation records for quick lookup
 evidenceDict = {}	# dictionary of evidence records for quick lookup
 pTermDict = {}		# dictionary of propery terms for quick lookup
-logicalDBDict = {}	# dictionary of logical db keys
+logicalDBLookup = {}	# dictionary of logical db keys
+evidenceLookup = {}	# dictionary of evidence key
+qualifierLookup = {}	# dictionary of qualifier key
+userLookup = {}
 
 loaddate = loadlib.loaddate
 
@@ -692,7 +691,8 @@ def loadDictionaries():
     #	nothing
     '''
 
-    global termDict, annotDict, evidenceDict, pTermDict, logicalDBDict
+    global termDict, annotDict, evidenceDict, pTermDict
+    global logicalDBLookup, evidenceLookup, qualifierLookup, userLookup
 
     # cache annotation type vocabulary
 
@@ -753,13 +753,44 @@ def loadDictionaries():
         evidenceDict[key] = value
 
     # cache logical db keys
-
     cmd = ''' select _logicaldb_key, name from ACC_LogicalDB '''
     results = db.sql(cmd, 'auto')
     for r in results:
         key = r['name']
         value = r['_logicaldb_key']
-        logicalDBDict[key] = value
+        logicalDBLookup[key] = value
+
+    # cache evidence key
+    cmd = ''' 
+    	select e._Term_key, e.abbreviation
+                from VOC_Term e, VOC_AnnotType t
+                where e._Vocab_key = t._EvidenceVocab_key
+                and t._AnnotType_key = %s'''  % (annotTypeKey)
+    results = db.sql(cmd, 'auto')
+    for r in results:
+        key = r['abbreviation']
+        value = r['_term_key']
+        evidenceLookup[key] = value
+
+    # cache qualifier key
+    cmd = ''' 
+    	select e._Term_key, e.abbreviation
+                from VOC_Term e, VOC_AnnotType t
+                where e._Vocab_key = t._QualifierVocab_key
+                and t._AnnotType_key = %s'''  % (annotTypeKey)
+    results = db.sql(cmd, 'auto')
+    for r in results:
+        key = r['abbreviation']
+        value = r['_term_key']
+        qualifierLookup[key] = value
+
+    # cache user key
+    cmd = ''' select _user_key, login from MGI_User '''
+    results = db.sql(cmd, 'auto')
+    for r in results:
+        key = r['login']
+        value = r['_user_key']
+        userLookup[key] = value
 
 def loadObjectDict():
     global objectDict
@@ -986,8 +1017,8 @@ def processMcvFile():
             if len(tokens) > 9:
                 # field 10 reserved for optional ldb the default is "1" (MGI)
                 col10 = str.strip(tokens[9])
-                if col10 in logicalDBDict:
-                    logicalDBKey = logicalDBDict[col10]
+                if col10 in logicalDBLookup:
+                    logicalDBKey = logicalDBLookup[col10]
 
             if len(tokens) > 10:
                 # field 11 reserved for optional properties
@@ -1018,9 +1049,21 @@ def processMcvFile():
         termKey = verifyTerm(termID, lineNum, line)
         markerKey = verifyObject(mgiID, logicalDBKey, lineNum, line)
         referenceKey = verifyReference(jnum, lineNum, line)
-        evidenceKey = vocabloadlib.verifyEvidence(evidence, annotTypeKey, lineNum, errorFile)
-        qualifierKey = vocabloadlib.verifyQualifier(qualifier, annotTypeKey, 0, lineNum, errorFile)
-        editorKey = loadlib.verifyUser(editor, lineNum, errorFile)
+
+        if evidence in evidenceLookup:
+            evidenceKey = evidenceLookup[evidence]
+        else:
+            evidenceKey = 0
+
+        if qualifier in qualifierLookup:
+            qualifierKey = qualifierLookup[qualifier]
+        else:
+            qualifierKey = 0
+
+        if editor in userLookup:
+            editorKey = userLookup[editor]
+        else:
+            editorKey = 0
         
         # if any verification failed, this is an error
         if termKey == 0 or markerKey == 0 or \
@@ -1110,8 +1153,8 @@ def processFile():
             if len(tokens) > 9:
                 # field 10 reserved for optional ldb the default is "1" (MGI)
                 col10 = str.strip(tokens[9])
-                if col10 in logicalDBDict:
-                    logicalDBKey = logicalDBDict[col10]
+                if col10 in logicalDBLookup:
+                    logicalDBKey = logicalDBLookup[col10]
 
                 if len(tokens) > 10:
                     # field 11 reserved for optional properties
@@ -1128,10 +1171,22 @@ def processFile():
         termKey = verifyTerm(termID, lineNum, line)
         objectKey = verifyObject(objectID, logicalDBKey, lineNum, line)
         referenceKey = verifyReference(jnum, lineNum, line)
-        evidenceKey = vocabloadlib.verifyEvidence(evidence, annotTypeKey, lineNum, errorFile)
-        qualifierKey = vocabloadlib.verifyQualifier(qualifier, annotTypeKey, 0, lineNum, errorFile)
-        editorKey = loadlib.verifyUser(editor, lineNum, errorFile)
 
+        if evidence in evidenceLookup:
+            evidenceKey = evidenceLookup[evidence]
+        else:
+            evidenceKey = 0
+
+        if qualifier in qualifierLookup:
+            qualifierKey = qualifierLookup[qualifier]
+        else:
+            qualifierKey = 0
+
+        if editor in userLookup:
+            editorKey = userLookup[editor]
+        else:
+            editorKey = 0
+        
         if termKey == 0 or \
             objectKey == 0 or \
             referenceKey == 0 or \
