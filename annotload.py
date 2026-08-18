@@ -773,6 +773,8 @@ def loadDictionaries():
     for r in results:
         key = r['abbreviation']
         value = r['_term_key']
+        if key == None:
+           key = ''
         qualifierLookup[key] = value
 
     # cache user key
@@ -782,7 +784,7 @@ def loadDictionaries():
         key = r['login']
         value = r['_user_key']
         userLookup[key] = value
-
+	
 def loadObjectDict():
     global objectDict
 
@@ -1168,6 +1170,8 @@ def processFile():
         else:
             evidenceKey = 0
 
+        if qualifier == '':
+            qualifier = 'None'
         if qualifier in qualifierLookup:
             qualifierKey = qualifierLookup[qualifier]
         else:
