@@ -203,7 +203,7 @@ pTermDict = {}		# dictionary of propery terms for quick lookup
 logicalDBLookup = {}	# dictionary of logical db keys
 evidenceLookup = {}	# dictionary of evidence key
 qualifierLookup = {}	# dictionary of qualifier key
-userLookup = {}
+userLookup = {}		# dictionary of user key
 
 loaddate = loadlib.loaddate
 
