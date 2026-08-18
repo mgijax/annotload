@@ -1170,8 +1170,6 @@ def processFile():
         else:
             evidenceKey = 0
 
-        if qualifier == '':
-            qualifier = 'None'
         if qualifier in qualifierLookup:
             qualifierKey = qualifierLookup[qualifier]
         else:
