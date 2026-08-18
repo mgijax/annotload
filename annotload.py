@@ -144,7 +144,6 @@ import sys
 import os
 import re
 import db
-import accessionlib
 import mgi_utils
 import loadlib
 
@@ -205,6 +204,7 @@ referenceDict = {}	# dictionary of references for quick lookup
 annotDict = {}		# dictionary of annotation records for quick lookup
 evidenceDict = {}	# dictionary of evidence records for quick lookup
 pTermDict = {}		# dictionary of propery terms for quick lookup
+logicalDBDict = {}	# dictionary of logical db keys
 
 loaddate = loadlib.loaddate
 
@@ -692,7 +692,7 @@ def loadDictionaries():
     #	nothing
     '''
 
-    global termDict, annotDict, evidenceDict, pTermDict
+    global termDict, annotDict, evidenceDict, pTermDict, logicalDBDict
 
     # cache annotation type vocabulary
 
@@ -751,6 +751,15 @@ def loadDictionaries():
         key = '%s:%s:%s' % (r['_Annot_key'], r['_EvidenceTerm_key'], r['_Refs_key'])
         value = r['_Annot_key']
         evidenceDict[key] = value
+
+    # cache logical db keys
+
+    cmd = ''' select _logicaldb_key, name from ACC_LogicalDB '''
+    results = db.sql(cmd, 'auto')
+    for r in results:
+        key = r['name']
+        value = r['_logicaldb_key']
+        logicalDBDict[key] = value
 
 def loadObjectDict():
     global objectDict
@@ -976,9 +985,10 @@ def processMcvFile():
 
             if len(tokens) > 9:
                 # field 10 reserved for optional ldb the default is "1" (MGI)
-                col10 = accessionlib.get_LogicalDB_key(tokens[9])
-                if col10 != None:
-                    logicalDBKey = col10
+                col10 = str.strip(tokens[9])
+                if col10 in logicalDBDict:
+                    logicalDBKey = logicalDBDict[col10]
+
             if len(tokens) > 10:
                 # field 11 reserved for optional properties
                 properties = str.strip(tokens[10])
@@ -1098,12 +1108,10 @@ def processFile():
             properties = ''
 
             if len(tokens) > 9:
-                # field 10 reserved for optional ldb
-                # the default is "1" (MGI)
-                col10 = accessionlib.get_LogicalDB_key(str.strip(tokens[9]))
-
-                if col10 != None:
-                    logicalDBKey = col10
+                # field 10 reserved for optional ldb the default is "1" (MGI)
+                col10 = str.strip(tokens[9])
+                if col10 in logicalDBDict:
+                    logicalDBKey = logicalDBDict[col10]
 
                 if len(tokens) > 10:
                     # field 11 reserved for optional properties
