@@ -695,39 +695,32 @@ def loadDictionaries():
     global logicalDBLookup, evidenceLookup, qualifierLookup, userLookup
 
     # cache annotation type vocabulary
-
     cmd = '''
         select t._Object_key, t.accID 
         from VOC_Term_Acc_View t, VOC_Term tm, VOC_AnnotType a
         where t._Object_key = tm._Term_key 
         and tm._Vocab_key = a._Vocab_key
         and a._AnnotType_key = %s''' % (annotTypeKey)
-
     # if loadObsolete is false, then only load non-obsoleted terms...
-
     if loadObsolete == '0':
         # only load non-obsoleted terms
         cmd = cmd + ' and tm.isObsolete = 0'
 
     results = db.sql(cmd, 'auto')
-
     for r in results:
         termDict[r['accID']] = r['_Object_key']
 
     # cache property vocabulary(s)
-
     cmd = '''
         select _Term_key, term
         from VOC_Term
         where _Vocab_key in (%s)
         ''' % (annotProperty)
     results = db.sql(cmd, 'auto')
-
     for r in results:
         pTermDict[r['term']] = r['_Term_key']
 
     # cache annotation keys for this type of annotation
-
     results = db.sql('''
         select _Annot_key, _Object_key, _Term_key, _Qualifier_key 
         from VOC_Annot
@@ -739,13 +732,11 @@ def loadDictionaries():
         annotDict[key] = value
 
     # cache evidence keys for this type of annotation
-
     cmd = '''
         select e._Annot_key, e._EvidenceTerm_key, e._Refs_key 
         from VOC_Evidence e, VOC_Annot a
         where a._AnnotType_key = %s
         and a._Annot_key = e._Annot_key''' % (annotTypeKey)
-
     results = db.sql(cmd, 'auto')
     for r in results:
         key = '%s:%s:%s' % (r['_Annot_key'], r['_EvidenceTerm_key'], r['_Refs_key'])
