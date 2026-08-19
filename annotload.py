@@ -147,7 +147,7 @@ import db
 import mgi_utils
 import loadlib
 
-db.setTrace(True)
+#db.setTrace(True)
 
 # globals
 
@@ -209,6 +209,9 @@ loaddate = loadlib.loaddate
 
 # execute this SQL after the bcp files
 execSQL = ''
+
+# true (1) if this is the mcvload
+isMCV = 0
 
 # true (1) if this is a MP load
 isMP = 0
@@ -276,7 +279,7 @@ def init():
     global noteFile, noteFileName
     global annotTypeKey, annotKey, annotTypeName, evidencePrimaryKey
     global noteKey, propertyKey
-    global isMP, isGO, isDiseaseMarker, isDiseaseAllele, isMPMarker, isMPAllele, isOMIMHPO
+    global isMCV, isMP, isGO, isDiseaseMarker, isDiseaseAllele, isMPMarker, isMPAllele, isOMIMHPO
     global loadType
 
     db.set_sqlUser(user)
@@ -298,7 +301,10 @@ def init():
         loadType = sys.argv[1]
         print('LOAD TYPE: %s' % sys.argv[1])
 
-        if loadType == 'mp':
+        if loadType == 'mcv':
+            isMCV = 1
+
+        elif loadType == 'mp':
             isMP = 1
 
         elif loadType == 'go':
@@ -979,7 +985,7 @@ def processMcvFile():
     # running list of markers in the input so we don't delete more than once
     mkrKeyList = []
 
-    # we first delete all annotations by marker, 
+    #  we first delete all annotations by marker, 
     # then recreate based on the input
     deleteSQL = '''delete from VOC_Annot where _AnnotType_key = %s and _Object_key = %s'''
     lineNum = 0
@@ -1319,7 +1325,10 @@ setPrimaryKeys()
 loadDictionaries()
 
 #print('\nannotload.py - process')
-processFile()
+if isMCV:
+    processMcvFile()
+else:
+    processFile()
 
 bcpFiles()
 
