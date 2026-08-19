@@ -654,6 +654,8 @@ def setPrimaryKeys():
     results = db.sql(''' select nextval('voc_evidence_property_seq') as maxKey ''', 'auto')
     propertyKey = results[0]['maxKey']
 
+    db.commit()
+
 def loadReferenceDictionary():
     '''
     # requires:
@@ -1036,6 +1038,7 @@ def processMcvFile():
                 print('delete only mode, deleting all annotations for %s' % markerKey)
                 print(deleteSQL % (annotTypeKey, markerKey))
                 db.sql(deleteSQL % (annotTypeKey, markerKey), None)
+                db.commit()
                 continue
 
         # if we get here, continue verifying
@@ -1076,6 +1079,7 @@ def processMcvFile():
         # first delete if we haven't already seen this marker in the input
         if not markerKey in mkrKeyList:
             db.sql(deleteSQL % (annotTypeKey, markerKey), None)
+            db.commit()
             mkrKeyList.append(markerKey)
 
         # then create annotations
@@ -1099,8 +1103,6 @@ def processMcvFile():
             entryDate, \
             line, \
             lineNum)
-
-    db.commit()
 
 def processFile():
     '''
@@ -1216,7 +1218,6 @@ def processFile():
         skipBCP = 0
 
     # end of "for line in inputFile.readlines():"
-    db.commit()
 
 def bcpFiles():
     '''
