@@ -213,6 +213,9 @@ execSQL = ''
 # true (1) if this is the mcvload
 isMCV = 0
 
+# true (1) if this is the mcvload
+isMCVStrain = 0
+
 # true (1) if this is a MP load
 isMP = 0
 
@@ -279,7 +282,7 @@ def init():
     global noteFile, noteFileName
     global annotTypeKey, annotKey, annotTypeName, evidencePrimaryKey
     global noteKey, propertyKey
-    global isMCV, isMP, isGO, isDiseaseMarker, isDiseaseAllele, isMPMarker, isMPAllele, isOMIMHPO
+    global isMCV, isMCVStrain, isMP, isGO, isDiseaseMarker, isDiseaseAllele, isMPMarker, isMPAllele, isOMIMHPO
     global loadType
 
     db.set_sqlUser(user)
@@ -303,6 +306,9 @@ def init():
 
         if loadType == 'mcv':
             isMCV = 1
+
+        elif loadType == 'mcvstrain':
+            isMCVStrain = 1
 
         elif loadType == 'mp':
             isMP = 1
