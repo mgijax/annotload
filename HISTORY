@@ -2,7 +2,8 @@ TAG: annotload-6-0-29-?
 DATE: 08/18/2026
 STAFF: lec
 sprt-29/Straingenemodel load for new Strain Genes
-	        modified:   annotload.py
+added "isMCVStrain"
+	modified:   annotload.py
 
 TAG: annotload-6-0-23-1
 DATE: 03/29/2024
