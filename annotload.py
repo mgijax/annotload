@@ -213,7 +213,7 @@ execSQL = ''
 # true (1) if this is the mcvload
 isMCV = 0
 
-# true (1) if this is the mcvload
+# true (1) if this is the straingenemodelload
 isMCVStrain = 0
 
 # true (1) if this is a MP load
