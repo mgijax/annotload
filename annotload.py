@@ -773,17 +773,24 @@ def loadDictionaries():
 
     # cache qualifier key
     cmd = ''' 
-    	select e._Term_key, e.abbreviation
+    	select e._Term_key, e.term, e.abbreviation
                 from VOC_Term e, VOC_AnnotType t
                 where e._Vocab_key = t._QualifierVocab_key
-                and t._AnnotType_key = %s'''  % (annotTypeKey)
+                and t._AnnotType_key = %s
+	'''  % (annotTypeKey)
     results = db.sql(cmd, 'auto')
     for r in results:
-        key = r['abbreviation']
+        key1 = r['term']
+        key2 = r['abbreviation']
         value = r['_term_key']
-        if key == None:
-           key = ''
-        qualifierLookup[key] = value
+        if key1 == None:
+           key1 = ''
+        if key2 == None:
+           key2 = ''
+        if key1 not in qualifierLookup:
+           qualifierLookup[key1] = value
+        if key2 not in qualifierLookup:
+           qualifierLookup[key2] = value
 
     # cache user key
     cmd = ''' select _user_key, login from MGI_User '''

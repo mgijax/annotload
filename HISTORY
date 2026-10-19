@@ -1,3 +1,10 @@
+TAG: annotload-6-0-29-2
+DATE: 10/19/2026
+STAFF: lec
+wts2-1905/sprt-442/HMDC not displaying Normals on Public and Test
+fixed bug introducted in sprt-29
+	modified:   annotload.py
+
 TAG: annotload-6-0-29-1
 DATE: 08/26/2026
 STAFF: lec
